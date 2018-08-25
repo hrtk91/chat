@@ -1,0 +1,47 @@
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+<script>
+'use strict'
+function LoginModule() {
+    this.username = '';
+    this.password = '';
+    this.dom = {
+        dialog: document.getElementById('login_dialog'),
+        button: {
+            login: $('#login_button'),
+        },
+        input: {
+            username: $('#username_text'),
+            password: $('#password_text')
+        }
+    };
+    this.login = function (evt) {
+        this.username = $('#username_text').val();
+        this.password = $('#password_text').val();
+        Cookies.set('username', this.username);
+        Cookies.set('password', this.password);
+
+        fetch('./user/login', { medthod: 'GET' })
+        .then(res => {
+            if (!res.ok)  throw new Error('ログイン通信エラー');
+            this.dom.dialog.close();
+        })
+        .catch(err => {
+            alert(err.message);
+            this.username = '';
+            this.password = '';
+            Cookies.remove('username');
+            Cookies.remove('password');
+        });
+    }
+    this.dom.button.login.on('click', this.login.bind(this));
+}
+</script>
+<dialog id="login_dialog">
+    <h3>ログイン</h3>
+    <p>
+    <input type="text" id="username_text" placeholder="ユーザ名"/>
+    <br/>
+    <input type="text" id="password_text" placeholder="パスワード"/>
+    </p>
+    <button id="login_button">ログイン</button>
+</dialog>
