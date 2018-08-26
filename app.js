@@ -1,4 +1,5 @@
 'use strict';
+process.on('unhandledRejection', console.dir);
 
 const fs = require('fs');
 const url = require('url');
@@ -54,28 +55,12 @@ function main(req, res) {
         if (req.method !== 'POST') {
             res.writeHead(400, {'Content-Type': 'text/plain'});
             res.end('400 Bad Request. Please use POST method.');
-            throw new Error('bad request');
         }
 
-        return new Promise((resolve, reject) => {
-            let body = '';
-            req.on('data', chunk => {
-                body += chunk;
-                if (body >= 1e6) { req.connection.destroy(); reject('データサイズが大きすぎます。'); }
-            })
-            .on('error', err => {
-                reject(err);
-            })
-            .on('end', () => {
-                const data = JSON.parse(body);
-                option.data = data;
-                resolve(option);
-            });
-        });
-    })
-    .then(option => {
-        const username = option.username;
-        const password = option.password;
+        let session = cookie.parse(req.headers.cookie);
+        const username = session.username;
+        const password = session.password;
+
         return db.createUser(username, password);
     })
     .then(() => {
@@ -83,7 +68,6 @@ function main(req, res) {
         res.end();
     })
     .catch(err => {
-        if ('bad request' !== err) throw err;
         res.writeHead(500, {'Content-Type': 'text/plain'});
         res.end('500 Server Internal Error.');
         console.error(err);

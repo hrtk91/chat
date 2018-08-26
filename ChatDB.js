@@ -81,22 +81,27 @@ ChatDB.prototype.isExists = function (username) {
 }
 ChatDB.prototype.login = function (username, password) {
     return new Promise((resolve, reject) => {
-        const query = 'select * from chat.users where chat.users.username = ? and chat.users.password = ?';
-        this.db.query(query, [username, password], function (err, results, fileds) {
-            if (!err && results.some(v => v))
-                resolve(results, fileds);
-            else
-                reject(err);
+        const query = 'select * from chat.users where chat.users.username = ?';
+        this.db.query(query, [username], function (err, results, fileds) {
+            if (err || !results.some(v => v)) reject(err);
+            const bcrypt = require('bcrypt');
+            const filtered = results.filter(v => bcrypt.compareSync(password, v.password));
+            if (filtered.length === 1) resolve();
+            else reject('ChatDB.prototype.login: user password not matched.');
         });
     });
 }
 ChatDB.prototype.createUser = function (username, password) {
     return new Promise((resolve, reject) => {
-        this.isExists(username).then(() => reject(new Error('already exists user')));
+        this.isExists(username).then(() => reject('already exists user'));
 
+        const bcrypt = require('bcrypt');
+        const saltRounds = 10;
+        const hashedPassword = bcrypt.hashSync(password, saltRounds);
+        
         const query = 'insert into chat.users (`username`, `password`) value(?, ?)';
-        this.db.query(query, [username, password], function (err, results, fields) {
-            if (!err) resolve(results, fields);
+        this.db.query(query, [username, hashedPassword], function (err, results, fields) {
+            if (!err) resolve();
             else reject(err);
         });
     });
