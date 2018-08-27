@@ -71,38 +71,46 @@ ChatDB.prototype.lastInsertID = function (option) {
 }
 */
 ChatDB.prototype.isExists = function (username) {
-    const query = 'select * from chat.users where username = ?';
     return new Promise((resolve, reject) => {
+        const query = 'select * from chat.users where username = ?';
         this.db.query(query, [username], function (err, results) {
-            if (!err && results.some(v => v)) resolve();
-            else      reject(err);
+            if (!err && results.some(v  => v.username))
+                resolve(true);
+            else
+                resolve(false);
         })
-    })
+    });
 }
 ChatDB.prototype.login = function (username, password) {
     return new Promise((resolve, reject) => {
         const query = 'select * from chat.users where chat.users.username = ?';
         this.db.query(query, [username], function (err, results, fileds) {
-            if (err || !results.some(v => v)) reject(err);
+            if (err || !results.some(v => v)) return reject(err);
+
             const bcrypt = require('bcrypt');
-            const filtered = results.filter(v => bcrypt.compareSync(password, v.password));
-            if (filtered.length === 1) resolve();
-            else reject('ChatDB.prototype.login: user password not matched.');
+            if (bcrypt.compareSync(password, results[0].password))
+                resolve();
+            else
+                reject('ChatDB.prototype.login: user password not matched.');
         });
     });
 }
 ChatDB.prototype.createUser = function (username, password) {
-    return new Promise((resolve, reject) => {
-        this.isExists(username).then(() => reject('already exists user'));
+    return this.isExists(username)
+    .then(result => {
+        if (result === true) throw new Error(`${username} is already exists.`);
 
         const bcrypt = require('bcrypt');
         const saltRounds = 10;
         const hashedPassword = bcrypt.hashSync(password, saltRounds);
-        
+
         const query = 'insert into chat.users (`username`, `password`) value(?, ?)';
         this.db.query(query, [username, hashedPassword], function (err, results, fields) {
-            if (!err) resolve();
-            else reject(err);
+            if (!err)  {
+                console.info('user ' + username + ' created!');
+            } else {
+                throw new Error('user ' + username + ' create have failed.');
+            }
         });
     });
 }
