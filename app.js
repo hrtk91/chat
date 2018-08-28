@@ -1,5 +1,5 @@
 'use strict';
-process.on('unhandledRejection', console.dir);
+//process.on('unhandledRejection', console.dir);
 
 const fs = require('fs');
 const url = require('url');
@@ -134,27 +134,6 @@ function main(req, res) {
                     res.end('500 Server Internal Error.');
                     console.error(err);
                 });
-
-                /*
-                const dbpath = path.join(__dirname, 'articles.csv');
-                const subject = post.sender + ',' + post.message + ',' + Date.now() + '\r\n';
-                fs.appendFile(
-                    dbpath,
-                    subject,
-                    err => {
-                        if (!err) {
-                            res.writeHead(201, {'Content-Type': 'application/json'});
-                            res.end();
-                            console.info('post data received');
-                            console.info(post);
-                        } else {
-                            res.writeHead(500, {'Content-Type': 'text/plain'});
-                            res.end('500 Server Internal Error.');
-                            console.error(err.message);
-                        }
-                    }
-                );
-                */
             });
         } else {
             res.writeHead(400, {'Content-Type': 'text/plain'});
@@ -171,40 +150,11 @@ function main(req, res) {
         }
 
         return db.getArticles();
-
-        /*
-        const csvpath = path.join(__dirname, 'articles.csv');
-        return new Promise((resolve, reject) => {
-            fs.readFile(csvpath, 'utf8', (err, data) => {
-                if (!err)
-                    resolve(data);
-                else
-                    reject(err);
-            });
-        });
-        */
     })
     .then((results, fields) => {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify(results));
     })
-    /*
-    .then(data => {
-        const table = data
-            .split('\r\n')
-            .filter(line => line !== '')
-            .map((line, idx, ary) => {
-                const first = ary[0].split(',');
-                const column = line.split(',');
-                let obj = {};
-                column.forEach((val, i) => obj[first[i]] = val);
-                return obj;
-            })
-            .splice(1);
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify(table));
-    })
-    */
     .catch(err => {
         res.writeHead(500, {'Content-Type': 'text/plain'});
         res.end('500 Server Internal Error.');
@@ -252,27 +202,6 @@ function main(req, res) {
                 res.end('500 Server Internal Error.');
                 console.error(err);
             });
-
-            /*
-            const subject = user + ',' + message + ',' + create + ',' + imageData + '\r\n';
-
-            const csvpath = path.join(__dirname, 'articles.csv');
-            fs.appendFile(
-                csvpath,
-                subject,
-                err => {
-                    if (!err) {
-                        res.writeHead(201, {'Content-Type': 'application/json'});
-                        res.end();
-                        console.info(post);
-                    } else {
-                        res.writeHead(500, {'Content-Type': 'text/plain'});
-                        res.end('500 Server Internal Error.');
-                        console.error(err);
-                    }
-                }
-            );
-            */
         });
     });
 

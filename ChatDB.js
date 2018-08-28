@@ -38,6 +38,20 @@ ChatDB.prototype.post = function (option) {
         });
     });
 }
+ChatDB.prototype.postCount = function (option) {
+    const query = 'select count(*) from chat.post';
+    return new Promise(resolve => {
+        this.db.query(query, function (err, results, fileds) {
+            if (!err) {
+                const count = results[0].count;
+                resolve(count);
+            }
+            else {
+                reject(err || new Error('postCount is 0.'));
+            }
+        })
+    })
+}
 ChatDB.prototype.postImage = function (option) {
     return this.post(option).then(id => {
         const imageData = option.data || '';
@@ -51,11 +65,23 @@ ChatDB.prototype.postImage = function (option) {
     });
 }
 ChatDB.prototype.getArticles = function (option) {
-    const query = 'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id';
+    // asc or desc
+    option = option || {};
+    const order = option.order || 'asc';
+    const num = (option.num ? Math.abs(option.num) : 0) || '10';
+    const query1 = 'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id ' 
+    const query2 = 'order by post.updated ' + order + ' ';
+    const query3 = 'limit ' + num;
+    const query = query1 + query2 + query3;
     return new Promise((resolve, reject) => {
         this.db.query(query, (err, results, fields) => {
-            if (!err) resolve(results, fields);
-            else reject(err);
+            if (!err)
+                resolve(results, fields);
+            else {
+                let err = err || new Error('Articles cant find.');
+                err.query = query;
+                reject(err);
+            }
         });
     });
 }
