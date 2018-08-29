@@ -67,18 +67,23 @@ ChatDB.prototype.postImage = function (option) {
 ChatDB.prototype.getArticles = function (option) {
     // asc or desc
     option = option || {};
-    const order = option.order || 'asc';
-    const num = (option.num ? Math.abs(option.num) : 0) || '10';
-    const query1 = 'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id ' 
-    const query2 = 'order by post.updated ' + order + ' ';
-    const query3 = 'limit ' + num;
-    const query = query1 + query2 + query3;
+    const fromId = (option.fromId ? Math.abs(option.fromId) : 0);
+    const order = option.order ? (option.order === 'asc' ? 'asc' : 'desc')
+        : 'desc';
+    const num = (option.num ? Math.abs(option.num) : 0) || 10;
+    const querys = [
+        'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id ',
+        'where post.id > ? ',
+        'order by post.updated ' + order + ' ',
+        'limit ? ',
+    ];
+    const query = querys.reduce((pq, cq) => pq + cq);
     return new Promise((resolve, reject) => {
-        this.db.query(query, (err, results, fields) => {
-            if (!err)
+        this.db.query(query, [fromId, num], (err, results, fields) => {
+            if (!err) {
                 resolve(results, fields);
-            else {
-                let err = err || new Error('Articles cant find.');
+            } else {
+                err = err || new Error('Articles cant find.');
                 err.query = query;
                 reject(err);
             }

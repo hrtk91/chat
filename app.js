@@ -148,8 +148,8 @@ function main(req, res) {
             res.end('400 Bad Request. Please use GET method.');
             return;
         }
-
-        return db.getArticles();
+        const parsedurl = url.parse(req.url, true);
+        return db.getArticles(parsedurl.query);
     })
     .then((results, fields) => {
         res.writeHead(200, {'Content-Type': 'application/json'});

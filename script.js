@@ -159,8 +159,9 @@ uploadButton.on('change', evt => {
     });
 });
 
-function fetchArticles() {
-    return fetch('./articles', { method: 'GET' })
+function fetchArticles(url) {
+    url = url || './articles';
+    return fetch(url, { method: 'GET' })
     .then(res => {
         if (!res.ok)
             throw new Error('Articlesの取得に失敗。');
