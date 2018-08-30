@@ -10,62 +10,6 @@ const recordStartButton = $('#record_start_button');
 const recordStopButton = $('#record_stop_button');
 const range = $('#range');
 
-if (/iP(hone|(o|a)d)/.test(navigator.userAgent)) {
-    recordStartButton.remove();
-    recordStopButton.remove();
-    range.remove();
-} else {
-
-let audioContext = new AudioContext();
-let canvas = null;
-
-recordStartButton.on('click', function (evt) {
-    const bufferSize = 1024;
-    let buffer = [];
-    audioContext = new AudioContext();
-    navigator.mediaDevices.getUserMedia({audio: true})
-    .then(stream => {
-        const mss = audioContext.createMediaStreamSource(stream);
-        const sp = audioContext.createScriptProcessor(bufferSize, 1, 1);
-        
-        canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const resolution = 1024;
-        const base = resolution * 0.5;
-        canvas.width = canvas.height = resolution;
-
-        $('#button_area').append(canvas);
-        $(canvas).css('width', base + 'px');
-        $(canvas).css('height', base + 'px');
-    
-        sp.onaudioprocess = function (evt) {
-            const input = event.inputBuffer.getChannelData(0);
-            let bufferData = new Float32Array(bufferSize);
-
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            ctx.moveTo(0, base);
-            input.forEach((v, i) => {
-                bufferData[i] = v;
-                ctx.lineTo(i, base + v * base);
-                range.val(v);
-            });
-            ctx.stroke();
-        }
-
-        mss.connect(sp);
-        sp.connect(audioContext.destination);
-    });
-});
-
-recordStopButton.on('click', function (evt) {
-    audioContext && audioContext.close();
-    canvas && canvas.remove();
-});
-}
-
 // ページ読み込み処理
 $('<div/>').appendTo('body').load('login.html', function () {
     var login_module = new LoginModule();
@@ -178,7 +122,7 @@ function fetchArticles(url) {
 
         return articles;
     })
-    .then(articles => restructArticles(articles));
+    .then(restructArticles);
 }
 
 function Article(article) {
@@ -198,7 +142,7 @@ function Article(article) {
         + ':'
         + date.getSeconds().toString();
 
-    let image = new Image();
+    const image = new Image();
     image.crossOrigin ='anonymous';
     if (article.image) { 
         image.src = 'data:image/jpg;base64,' + article.image;
@@ -215,6 +159,64 @@ function restructArticles(articles) {
     $('#articles').empty();
     articles.forEach(article => Article(article).appendTo('#articles'));
 }
+
+/*
+if (/iP(hone|(o|a)d)/.test(navigator.userAgent)) {
+    recordStartButton.remove();
+    recordStopButton.remove();
+    range.remove();
+} else {
+
+let audioContext = new AudioContext();
+let canvas = null;
+
+recordStartButton.on('click', function (evt) {
+    const bufferSize = 1024;
+    let buffer = [];
+    audioContext = new AudioContext();
+    navigator.mediaDevices.getUserMedia({audio: true})
+    .then(stream => {
+        const mss = audioContext.createMediaStreamSource(stream);
+        const sp = audioContext.createScriptProcessor(bufferSize, 1, 1);
+        
+        canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const resolution = 1024;
+        const base = resolution * 0.5;
+        canvas.width = canvas.height = resolution;
+
+        $('#button_area').append(canvas);
+        $(canvas).css('width', base + 'px');
+        $(canvas).css('height', base + 'px');
+    
+        sp.onaudioprocess = function (evt) {
+            const input = event.inputBuffer.getChannelData(0);
+            let bufferData = new Float32Array(bufferSize);
+
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(0, base);
+            input.forEach((v, i) => {
+                bufferData[i] = v;
+                ctx.lineTo(i, base + v * base);
+                range.val(v);
+            });
+            ctx.stroke();
+        }
+
+        mss.connect(sp);
+        sp.connect(audioContext.destination);
+    });
+});
+
+recordStopButton.on('click', function (evt) {
+    audioContext && audioContext.close();
+    canvas && canvas.remove();
+});
+}
+*/
 
 });
 
