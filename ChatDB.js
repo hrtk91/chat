@@ -40,7 +40,7 @@ ChatDB.prototype.post = function (option) {
 }
 ChatDB.prototype.postCount = function (option) {
     const query = 'select count(*) from chat.post';
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         this.db.query(query, function (err, results, fileds) {
             if (!err) {
                 const count = results[0].count;
@@ -107,7 +107,8 @@ ChatDB.prototype.login = function (username, password) {
     return new Promise((resolve, reject) => {
         const query = 'select * from chat.users where chat.users.username = ?';
         this.db.query(query, [username], function (err, results, fileds) {
-            if (err || !results.some(v => v)) return reject(err);
+            if (err || !results.some(v => v))
+                return reject(err || new Error('ChatDB.login: query error.'));
 
             const bcrypt = require('bcrypt');
             if (bcrypt.compareSync(password, results[0].password))

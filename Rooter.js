@@ -36,7 +36,7 @@ Rooter.prototype.off = function (type) {
     if (validations[type] !== undefined)
         validations[type] = undefined;
     if (listener[type] !== undefined)
-        lsitener[type] = undefined;
+        listener[type] = undefined;
 
     return this;
 }

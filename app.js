@@ -14,19 +14,8 @@ http.createServer(main).listen(8080);
 
 function main(req, res) {
     const query = url.parse(req.url, true);
-    const pathname = query.pathname;
-    const filepath = path.join(__dirname, pathname);
-    const ext = path.extname(filepath);
-    
-    console.log('requested:' + req.connection.remoteAddress + '@' + filepath);
 
-    if (ext && fs.existsSync(filepath) === true) {
-        setHeaderFromExtension(ext, res);
-        writeResponse(filepath, res);
-        return;
-    }
-
-    const apicode = pathname;
+    const apicode = query.pathname;
     chatController.fire(apicode, {
         request: req,
         response: res

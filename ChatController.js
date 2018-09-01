@@ -3,11 +3,12 @@
 const cookie = require('cookie');
 const url = require('url');
 const path = require('path');
+const fs = require('fs');
 const Rooter = require('./Rooter.js');
 const ChatDB = require('./ChatDB.js');
 
 const ChatController = new Rooter();
-const db = ChatController.DB = new ChatDB({
+const db = new ChatDB({
     host: 'localhost',
     port: 3306,
     user: 'node',
@@ -22,11 +23,44 @@ db.connect()
     console.error(err);
 });
 
+function readFile(filepath) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(filepath, (err, data) => {
+            if (!err)
+                resolve(data);
+            else
+                reject(err);
+        });
+    });
+}
+function setHeaderFromExtension(ext, res) {
+    switch (ext) {
+        case '.html':
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            break;
+        case '.js':
+            res.writeHead(200, {'Content-Type': 'application/json'});
+            break;
+        default:
+            res.writeHead(404, {'Content-Type': 'text/plain'});
+            break;
+    }
+}
 
 ChatController.defaultRooting(function (option) {
+    const req = option.request;
     const res = option.response;
-    res.writeHead(404, {'Content-Type' : 'text/plain'});
-    res.end('404 not found.');
+    const query = url.parse(req.url, true);
+    const filepath = path.join(__dirname, query.pathname);
+    const ext = path.extname(filepath);
+    if (ext && fs.existsSync(filepath) === true) {
+        setHeaderFromExtension(ext, res);
+        readFile(filepath).then(data => res.end(data));
+        return;
+    } else {
+        res.writeHead(404, {'Content-Type' : 'text/html'});
+        res.end('404 not found.');
+    }
 });
 
 ChatController.on('/', option => {
@@ -53,6 +87,8 @@ ChatController.on('/user/create', function (option) {
     }
     return true;
 }, option => {
+    const req = option.request;
+    const res = option.response;
     const session = cookie.parse(req.headers.cookie);
     const username = session.username;
     const password = session.password;
@@ -81,21 +117,17 @@ ChatController.on('/user/login', function (option) {
     return true;
 }, option => {
     const req = option.request;
+    const res = option.response;
     const session = cookie.parse(req.headers.cookie);
     const username = session.username;
     const password = session.password;
 
     return db.login(username, password)
-    .then(() => option)
-    .catch(err => { option.error = err; throw option; })
-    .then(option => {
-        const res = option.response;
+    .then(() => {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end();
     })
-    .catch(option => {
-        const err = option.error;
-        const res = option.response;
+    .catch(err => {
         res.writeHead(500, {'Content-Type': 'text/plain'});
         res.end('500 Server Internal Error.');
         console.error(err);
@@ -227,17 +259,5 @@ ChatController.on('/image', function (option) {
         });
     });
 });
-
-function readFile(filepath) {
-    return new Promise((resolve, reject) => {
-        const fs = require('fs');
-        fs.readFile(filepath, (err, data) => {
-            if (!err)
-                resolve(data);
-            else
-                reject(err);
-        });
-    });
-}
 
 module.exports = ChatController;
