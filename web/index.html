@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="./style.css"/>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
     <script src="./script.js"></script>
@@ -10,19 +11,22 @@
 </head>
 <body>
     <div>
-            <div id="button_area">
-                <textarea placeholder="placeholder" id="input_text"></textarea>
-                <button id="send_button">送信</button>
-                <input type="file" id="upload_button" accept="image/png,image/jpeg"/>
-                <button id="logout_button">ログアウト</button>
-                <!--
-                <button id="record_start_button">録音</button>
-                <button id="record_stop_button">録音停止</button>
-                <input type="range" id="range" min="-1" max="1" step="0.001" value="1"/>
-                -->
-            </div>
-            <div id="articles">
-            </div>
+        <div class="inputs">
+            <textarea placeholder="placeholder" id="input_text"></textarea>
+            <button id="send_button">送信</button>
+            <label for="upload_button">
+                <span>ファイルを選択</span>
+                <input type="file" id="upload_button" accept="image/png,image/jpeg" style="display:none"/>
+            </label>
+            <button id="logout_button">ログアウト</button>
+            <!--
+            <button id="record_start_button">録音</button>
+            <button id="record_stop_button">録音停止</button>
+            <input type="range" id="range" min="-1" max="1" step="0.001" value="1"/>
+            -->
+        </div>
+        <div id="articles">
+        </div>
     </div>
 </body>
 </html>

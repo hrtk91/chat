@@ -145,15 +145,15 @@ function Article(article) {
     const create =
         date.getFullYear().toString()
         + '年'
-        + (date.getMonth() + 1).toString()
+        + ('00' + (date.getMonth() + 1).toString()).slice(-2)
         + '月'
-        + date.getDate().toString()
+        + ('00' + date.getDate().toString()).slice(-2)
         + '日 '
-        + date.getHours().toString()
+        + ('00' + date.getHours().toString()).slice(-2)
         + ':'
-        + date.getMinutes().toString()
+        + ('00' + date.getMinutes().toString()).slice(-2)
         + ':'
-        + date.getSeconds().toString();
+        + ('00' + date.getSeconds().toString()).slice(-2);
 
     const image = new Image();
     image.crossOrigin ='anonymous';
@@ -161,11 +161,23 @@ function Article(article) {
         image.src = 'data:image/jpg;base64,' + article.image;
     }
 
-    return $('<div class="article"></div>')
-        .append(`<h4>${sender}</h4>`)
+    const header =
+        $('<div class="article_header"></div>')
+        .append(
+            $(`<h3>${sender}</h3>`)
+            .append(`<span class="post_time">posted at:${create}</span>`)
+        );
+    const body =
+        $('<div class="article_body"></div>')
         .append(`<p>${message}</p>`)
-        .append(image)
-        .append(`<p>${create}</p>`);
+        .append(image);
+    const footer =
+        $('<div class="article_footer"></div>');
+
+    return $('<div class="article"></div>')
+        .append(header)
+        .append(body)
+        .append(footer);
 }
 
 function restructArticles(articles) {
