@@ -5,15 +5,19 @@ document.addEventListener('DOMContentLoaded', () => {
 const textarea = $('#input_text');
 const sendButton = $('#send_button');
 const uploadButton = $('#upload_button');
-
-const recordStartButton = $('#record_start_button');
-const recordStopButton = $('#record_stop_button');
-const range = $('#range');
+const logoutButton = $('#logout_button');
 
 // ページ読み込み処理
 $('<div/>').appendTo('body').load('login.html', function () {
-    var login_module = new LoginModule();
-    login_module.dom.dialog.showModal();
+    const login_module = new LoginModule();
+    const dialog = login_module.dom.dialog;
+    const username = $(login_module.dom.input.username).val();
+    const password = $(login_module.dom.input.password).val();
+    if (username && password) {
+        login_module.login();
+    } else {
+        dialog.showModal();
+    }
 });
 fetchArticles().catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
 // ここまで
@@ -51,7 +55,7 @@ uploadButton.on('change', evt => {
         return new Promise((resolve, reject) => {
             tmpImg.onload = resolve;
             tmpImg.onerror = reject;
-            tmpImg.crossOrigin = "Anonymous";
+            tmpImg.crossOrigin = 'Anonymous';
             tmpImg.src = body;
         });
     })
@@ -101,6 +105,15 @@ uploadButton.on('change', evt => {
         }
         fetchArticles();
     });
+});
+
+logoutButton.on('click', function (evt) {
+    const isLogout = confirm('ログアウトします。\r\nよろしいですか？');
+    if (isLogout) {
+        Cookies.remove('username');
+        Cookies.remove('password');
+        window.location.reload();
+    }
 });
 
 function fetchArticles(url) {
@@ -161,6 +174,10 @@ function restructArticles(articles) {
 }
 
 /*
+const recordStartButton = $('#record_start_button');
+const recordStopButton = $('#record_stop_button');
+const range = $('#range');
+
 if (/iP(hone|(o|a)d)/.test(navigator.userAgent)) {
     recordStartButton.remove();
     recordStopButton.remove();
