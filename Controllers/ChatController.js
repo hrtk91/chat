@@ -4,8 +4,8 @@ const cookie = require('cookie');
 const url = require('url');
 const path = require('path');
 const fs = require('fs');
-const Rooter = require('./Rooter.js');
-const ChatDB = require('./ChatDB.js');
+const Rooter = require('../Models/Rooter.js');
+const ChatDB = require('../Models/ChatDB.js');
 
 const ChatController = new Rooter();
 const db = new ChatDB({
@@ -41,6 +41,9 @@ function setHeaderFromExtension(ext, res) {
         case '.js':
             res.writeHead(200, {'Content-Type': 'application/json'});
             break;
+        case '.css':
+            res.writeHead(200, {'Content-Type': 'text/css'});
+            break;
         default:
             res.writeHead(404, {'Content-Type': 'text/plain'});
             break;
@@ -51,11 +54,13 @@ ChatController.defaultRooting(function (option) {
     const req = option.request;
     const res = option.response;
     const query = url.parse(req.url, true);
-    const filepath = path.join(__dirname, query.pathname);
+    const filepath = path.join(process.cwd(), 'web', query.pathname);
     const ext = path.extname(filepath);
+
     if (ext && fs.existsSync(filepath) === true) {
         setHeaderFromExtension(ext, res);
         readFile(filepath).then(data => res.end(data));
+        console.info((new Date()) + ' responsed To "' + req.socket.address().address + '" : ' + filepath);
         return;
     } else {
         res.writeHead(404, {'Content-Type' : 'text/html'});
@@ -65,7 +70,7 @@ ChatController.defaultRooting(function (option) {
 
 ChatController.on('/', option => {
     const res = option.response;
-    const filepath = path.join(__dirname, 'index.html');
+    const filepath = path.join(process.cwd(), 'web', 'index.html');
     res.writeHead(200, {'Content-Type': 'text/html'});
     readFile(filepath).then(data => {
         res.end(data);
@@ -195,6 +200,7 @@ ChatController.on('/articles', function (option) {
     return true;
 }, option => {
     const req = option.request;
+    const res = option.response;
     const parsedurl = url.parse(req.url, true);
     return db.getArticles(parsedurl.query)
     .then(results => { option.results = results; return option; })
@@ -205,9 +211,7 @@ ChatController.on('/articles', function (option) {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify(results));
     })
-    .catch(option => {
-        const res = option.response;
-        const err = option.error;
+    .catch(err => {
         res.writeHead(500, {'Content-Type': 'text/plain'});
         res.end('500 Server Internal Error.');
         console.error(err);
