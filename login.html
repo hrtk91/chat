@@ -18,12 +18,19 @@ function LoginModule() {
     this.login = function (evt) {
         this.username = $('#username_text').val();
         this.password = $('#password_text').val();
+
+        if (!this.username || !this.password) {
+            alert('ユーザ名とパスワードを入力してください。');
+            return;
+        }
+
         Cookies.set('username', this.username);
         Cookies.set('password', this.password);
 
         fetch('./user/login', { method: 'GET' })
         .then(res => {
-            if (!res.ok)  throw new Error('ログイン通信エラー');
+            if (!res.ok)
+                throw new Error('ログインエラー');
             this.dom.dialog.close();
         })
         .catch(err => {
