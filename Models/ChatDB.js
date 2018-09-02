@@ -57,7 +57,7 @@ ChatDB.prototype.postImage = function (option) {
         const imageData = option.data || '';
         const query = 'insert into chat.post_image (`post_id`, `type`, `data`) value (?, ?, ?)';
         return new Promise((resolve, reject) => {
-            this.db.query(query, [id,'test', imageData], function (err, results) {
+            this.db.query(query, [id, '', imageData], function (err, results) {
                 if (!err) resolve(results.insertId);
                 else reject(err);
             });

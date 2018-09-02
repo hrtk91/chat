@@ -22,44 +22,87 @@ $('<div/>').appendTo('body').load('login.html', function () {
 fetchArticles().catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
 // ここまで
 
+textarea.on('keyup', function (evt) {
+    const key = evt.keyCode;
+    if (evt.ctrlKey && key === 0x0D) {
+        sendButton.trigger('click');
+    }
+});
+
 sendButton.on('click', (e) => {
     const sender = Cookies.get('username');
     const message = textarea.val();
-    fetch('/article', {
-        headers: { 'content-type': 'application/json' },
-        method: 'POST',
-        body: JSON.stringify({ sender: sender, message: message })
-    })
-    .then(res => {
-        if (!res.ok) throw new Error('メッセージの送信に失敗しました。');
-        fetchArticles();
-    });
+    const img = $('.inputs img')[0];
+    if (!img) {
+        fetch('/article', {
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+            body: JSON.stringify({ sender: sender, message: message })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('メッセージの送信に失敗しました。');
+            textarea.val('');
+            fetchArticles();
+        });
+    } else {
+        const dataURL = img.src;
+        const data = dataURL.substring(dataURL.indexOf(',') + 1);
+        fetch('./image', {
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            body: JSON.stringify({
+                sender: sender,
+                message: message,
+                imageData: data
+            })
+        })
+        .then(res => {
+            if (!res.ok) {
+                const msg = '送信に失敗しました。';
+                throw new Error(msg);
+            }
+            img.remove();
+            textarea.val('');
+            fetchArticles();
+        });
+    }
 });
 
 uploadButton.on('change', evt => {
     const fileData = evt.target.files[0];
     
-  if (!fileData.type.match('image/png') && !fileData.type.match('image/jpeg')) {
+    if (!fileData.type.match('image/png') && !fileData.type.match('image/jpeg')) {
         alert('pngまたはjpeg画像を選択してください');
         return;
     }
 
-    const reader = new FileReader();
-    new Promise(resolve => {
-        reader.onload = resolve;
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
         reader.readAsDataURL(fileData);
+        reader.onerror = function (err) {
+            const msg = 'ファイルの読み込みに失敗しました。';
+            evt.errmsg = msg;
+            alert(msg);
+            reject(err);
+        }
+        reader.onloadend = function (evt) {
+            resolve(evt.target.result);
+        }
     })
-    .then(evt => reader.result)
     .then(body => {
         const tmpImg = new Image();
         return new Promise((resolve, reject) => {
+            tmpImg.onerror = function (evt) {
+                const msg = '画像の読み込みに失敗しました。';
+                evt.errmsg = msg;
+                alert(msg);
+                reject(evt);
+            }
             tmpImg.onload = resolve;
-            tmpImg.onerror = reject;
             tmpImg.crossOrigin = 'Anonymous';
             tmpImg.src = body;
         });
     })
-    .catch(() => new Error('画像読み込み失敗'))
     .then(evt => {
         const tmpImg = evt.target;
         const canvas = document.createElement('canvas');
@@ -77,33 +120,28 @@ uploadButton.on('change', evt => {
 
         const dataURL = canvas.toDataURL();
         return new Promise((resolve, reject) => {
+            img.onerror = function (evt) {
+                const msg = '画像の変換に失敗しました。';
+                evt.errmsg = msg;
+                alert(msg);
+                reject(evt);
+            }
             img.onload = resolve;
-            img.onerror = reject;
-            img.dataURL =dataURL;
             img.src = dataURL;
         });
     })
-    .catch(() => new Error('画像変換に失敗しました。'))
     .then(evt => {
         const img = evt.target;
         const dataURL = img.dataURL;
-
-        return fetch('./image', {
-            headers: { 'Content-Type': 'application/json' },
-            method: 'POST',
-            body: JSON.stringify({
-                sender: 'user',
-                message: '',
-                imageData: dataURL.substring(dataURL.indexOf(',') + 1)
-            })
-        });
+        $(img).css('max-width', '32px');
+        $(img).css('max-height', '32px');
+        $('.inputs').append(img);
     })
-    .catch(() => new Error('画像の送信に失敗しました。'))
-    .then(res => {
-        if (!res.ok) {
-            throw new Error('送信失敗');
-        }
-        fetchArticles();
+    .catch(evt => {
+        console.error(evt);
+    })
+    .finally(() => {
+        uploadButton.val('');
     });
 });
 
