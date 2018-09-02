@@ -166,7 +166,7 @@ ChatController.on('/article', function (option) {
     .on('end', () => {
         const post = JSON.parse(body);
 
-        const session = cookie.parse(req.headers.cookie);
+        const session = cookie.parse(req.headers.cookie || '');
         const username = session.username;
         const password = session.password;
 
