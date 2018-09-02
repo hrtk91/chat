@@ -13,7 +13,7 @@ const db = new ChatDB({
     port: 3306,
     user: 'node',
     password: 'node',
-    database: 'chat',
+    dbname: 'chat',
 });
 db.connect()
 .then(err => {

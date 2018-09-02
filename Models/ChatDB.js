@@ -5,7 +5,7 @@ const mysql = require('mysql');
 function ChatDB(option) {
     this.host = option.host || 'localhost';
     this.port = option.port || 3306;
-    this.dbname = option.dbnmae;
+    this.dbname = option.dbname;
     this.user = option.user;
     this.password = option.password;
     this.db = null;

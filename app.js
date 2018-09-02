@@ -23,3 +23,7 @@ function main(req, res) {
         response: res
     });
 }
+
+module.exports = {
+    main: main
+};
