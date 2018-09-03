@@ -26,10 +26,10 @@ ChatDB.prototype.connect = function () {
     });
 }
 ChatDB.prototype.post = function (option) {
-    const sender = option.sender || 'user';
-    const message = option.message || '';
+    const sender = option.sender;
+    const message = option.message;
     const query = 'insert into chat.post (`sender`,`message`, `user_id`) value (?, ?, ?);';
-    return this.isExists(option.sender).then(() => { 
+    return this.login(option.sender, option.password).then(() => { 
         return new Promise((resolve, reject) => {
             this.db.query(query, [sender, message, 1], function (err, results) {
                 if (!err) resolve(results.insertId);
