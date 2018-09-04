@@ -1,0 +1,289 @@
+'use strict';
+const path = require('path');
+const http = require('http');
+const mysql = require('mysql');
+const app = require(path.join(process.cwd(), 'app.js'));
+
+describe('app.jsの検査', function () {
+    var option = {};
+    var db = null;
+    beforeEach(done => {
+        option = {
+            host: 'localhost',
+            port: 8080,
+            path: '/',
+            method: 'GET',
+        };
+        db = mysql.createConnection({
+            database: 'chat',
+            host: 'localhost',
+            port: 3306,
+            user: 'node',
+            password: 'node',
+        });
+        const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`) value (?, ?, ?);'
+        const tasks = [];
+        for (var i = 0; i < 30; i++) {
+            var p = new Promise((resolve, reject) => {
+                db.query(insertQuery, ['testsender' + i.toString(), 'message' + i.toString(), 43], function (err, results) {
+                    if (err)
+                        reject(err);
+                    else
+                        resolve(results);
+                });
+            });
+            tasks.push(p);
+        }
+        Promise.all(tasks)
+        .then(values => {
+            done();
+        });
+    });
+    afterEach(done => {
+        const deleteQuerys = [
+            'delete from chat.post_image;',
+            'delete from chat.post;',
+            'alter table chat.post_image auto_increment = 1;',
+            'alter table chat.post auto_increment = 1;'
+        ];
+        const tasks = deleteQuerys.map(query => {
+            return new Promise((resolve, reject) => {
+                db.query(query, function (err, results) {
+                if (err)
+                    reject(err);
+                else    
+                    resolve(err);
+                });
+            });
+        });
+        Promise.all(tasks)
+        .then(values => {
+            done();
+        });
+    });
+    describe('/articlesの取得順検査', function () {
+        describe('/articles', function () {
+            it('最新のポスト10件を取得する。', function (done) {
+                option.path = '/articles';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        let data = JSON.parse(body);
+                        console.log('/articles');
+                        console.log(`data.length = ${data.length}`);
+                        expect(10).toBe(data.length);
+                        data.reduce((pv, cv) => {
+                            console.log(`${pv.id} > ${cv.id}`);
+                            expect(true).toBe(pv.id > cv.id);
+                            return cv;
+                        });
+                        done();
+                    });
+                });
+                req.end();
+            });
+        });
+        describe('/articles?order=asc', function () {
+            it('最古のポスト10件を取得する。', function (done) {
+                option.path = '/articles?order=asc';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        let data = JSON.parse(body);
+                        console.log(option.path);
+                        console.log(`data.length = ${data.length}`);
+                        expect(10).toBe(data.length);
+                        data.reduce((pv, cv) => {
+                            console.log(`${pv.id} < ${cv.id}`);
+                            expect(true).toBe(pv.id < cv.id);
+                            return cv;
+                        });
+                        done();
+                    });
+                });
+                req.end();
+            });
+        });
+        describe('/articles?order=desc', function () {
+            it('最新のポスト10件を取得する。', function (done) {
+                option.path = '/articles?order=desc';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        let data = JSON.parse(body);
+                        console.log(option.path);
+                        console.log(`data.length = ${data.length}`);
+                        expect(10).toBe(data.length);
+                        data.reduce((pv, cv) => {
+                            console.log(`${pv.id} > ${cv.id}`);
+                            expect(true).toBe(pv.id > cv.id);
+                            return cv;
+                        });
+                        done();
+                    });
+                });
+                req.end();
+            });
+        });
+        describe('/articles?order=qwerty', function () {
+            it('最新のポスト10件を取得する。', function (done) {
+                option.path = '/articles?order=qwerty';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        let data = JSON.parse(body);
+                        console.log(option.path);
+                        console.log(`data.length = ${data.length}`);
+                        expect(10).toBe(data.length);
+                        data.reduce((pv, cv) => {
+                            console.log(`${pv.id} > ${cv.id}`);
+                            expect(true).toBe(pv.id > cv.id);
+                            return cv;
+                        });
+                        done();
+                    });
+                });
+                req.end();
+            });
+        });
+    });
+
+    describe('/articlesの取得順調査（起点ID指定）', function () {
+        describe('/articles?originId=10', function () {
+            it('ポストID10以降の最新ポスト10件を取得する。', function (done) {
+                option.path = '/articles?originId=10';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        try{
+                            let data = JSON.parse(body);
+                            console.log(option.path);
+                            console.log(`data.length = ${data.length}`);
+                            expect(10).toBe(data.length);
+                            data.reduce((pv, cv) => {
+                                console.log(`${pv.id} > ${cv.id}`);
+                                expect(true).toBe(pv.id > cv.id);
+                                return cv;
+                            });
+                        } catch (e) {
+                            fail(e);
+                        } finally {
+                            done();
+                        }
+                    });
+                });
+                req.end();
+            });
+        });
+        describe('/articles?originId=10&originOrder=new', function () {
+            it('ポストID10からの最新のポスト10件を取得する。', function (done) {
+                option.path = '/articles?originId=10&originOrder=new';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        try {
+                            let data = JSON.parse(body);
+                            console.log(option.path);
+                            console.log(`data.length = ${data.length}`);
+                            expect(10).toBe(data.length);
+                            expect(20).toBe(data[0].id);
+                            data.reduce((pv, cv) => {
+                                expect(`${pv.id} > ${cv.id} = true`).toBe(`${pv.id} > ${cv.id} = ` + (pv.id > cv.id));
+                                return cv;
+                            });
+                        } catch (e) {
+                            fail(e);
+                        } finally {
+                            done();
+                        }
+                    });
+                });
+                req.end();
+            });
+        });
+        describe('/articles?originId=10&originOrder=old', function () {
+            it('ポストID10以前のポスト10件を取得する。', function (done) {
+                option.path = '/articles?originId=10&originOrder=old';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        try {
+                            let data = JSON.parse(body);
+                            console.log(option.path);
+                            console.log(`data.length = ${data.length}`);
+                            expect(10).toBe(data.length);
+                            expect(10).toBe(data[0].id);
+                            data.reduce((pv, cv) => {
+                                expect(`${pv.id} > ${cv.id} = true`).toBe(`${pv.id} > ${cv.id} = ` + (pv.id > cv.id));
+                                return cv;
+                            });
+                        } catch (e) {
+                            fail(e);
+                        } finally {
+                            done();
+                        }
+                    });
+                });
+                req.end();
+            });
+        });
+        describe('/articles?originId=10&originOrder=qwerty', function () {
+            it('ポストID10以前のポスト10件を取得する。', function (done) {
+                option.path = '/articles?originId=10&originOrder=qwerty';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        try {
+                            let data = JSON.parse(body);
+                            console.log(option.path);
+                            console.log(`data.length = ${data.length}`);
+                            expect(10).toBe(data.length);
+                            data.reduce((pv, cv) => {
+                                expect(`${pv.id} > ${cv.id} = true`).toBe(`${pv.id} > ${cv.id} = ` + (pv.id > cv.id));
+                                return cv;
+                            });
+                        } catch (e) {
+                            fail(e);
+                        } finally {
+                            done();
+                        }
+                    });
+                });
+                req.end();
+            });
+        });
+
+    });
+});

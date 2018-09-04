@@ -29,9 +29,9 @@ ChatDB.prototype.post = function (option) {
     const sender = option.sender;
     const message = option.message;
     const query = 'insert into chat.post (`sender`,`message`, `user_id`) value (?, ?, ?);';
-    return this.login(option.sender, option.password).then(() => { 
+    return this.login(option.sender, option.password).then(id => { 
         return new Promise((resolve, reject) => {
-            this.db.query(query, [sender, message, 1], function (err, results) {
+            this.db.query(query, [sender, message, id], function (err, results) {
                 if (!err) resolve(results.insertId);
                 else      reject(err);
             });
@@ -68,17 +68,31 @@ ChatDB.prototype.getArticles = function (option) {
     // asc or desc
     option = option || {};
     const originId = (option.originId ? Math.abs(option.originId) : 0);
-    const originOrder = option.originOrder ? (option.originOrder === 'new' ? '>=' : '<=') : '>=';
-    const order = 
-        option.order ? (option.order === 'asc' ? 'asc' : 'desc')
-        : 'desc';
+    const originOrder = option.originOrder === 'old' ? 'old' : 'new'; 
+    const order = option.order === 'asc' ? 'asc' : 'desc';
     const num = (option.num ? Math.abs(option.num) : 0) || 10;
+
     const querys = [
-        'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id ',
-        'where post.id ' + originOrder + ' ? ',
-        'order by post.updated ' + order + ' ',
-        'limit ? ',
+        'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id '
     ];
+    
+    if (originOrder === 'new')
+        querys.push('where post.id >= ? ');
+    else if (originOrder === 'old')
+        querys.push('where post.id <= ? ');
+
+    if (originId !== 0 && originOrder === 'new')
+        querys.push('and post.id <= ' + (originId + num).toString() + ' ');
+    else if (originId !== 0 && originOrder === 'old')
+        querys.push('and post.id >= ' + (originId - num).toString() + ' ');
+    
+    if (order === 'asc')
+        querys.push('order by post.updated asc ');
+    else
+        querys.push('order by post.updated desc ');
+
+    querys.push('limit ?');
+
     const query = querys.reduce((pq, cq) => pq + cq);
     return new Promise((resolve, reject) => {
         this.db.query(query, [originId, num], (err, results, fields) => {
@@ -105,14 +119,14 @@ ChatDB.prototype.isExists = function (username) {
 }
 ChatDB.prototype.login = function (username, password) {
     return new Promise((resolve, reject) => {
-        const query = 'select * from chat.users where chat.users.username = ?';
+        const query = 'select * from chat.users where users.username = ?';
         this.db.query(query, [username], function (err, results, fileds) {
             if (err || !results.some(v => v))
                 return reject(err || new Error('ChatDB.login: query error.'));
 
             const bcrypt = require('bcrypt');
             if (bcrypt.compareSync(password, results[0].password))
-                resolve();
+                resolve(results[0].id);
             else
                 reject('ChatDB.prototype.login: user password not matched.');
         });

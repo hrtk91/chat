@@ -202,11 +202,8 @@ ChatController.on('/articles', function (option) {
     const req = option.request;
     const res = option.response;
     const parsedurl = url.parse(req.url, true);
-    return db.getArticles(parsedurl.query)
-    .then(results => { option.results = results; return option; })
-    .catch(err => { option.error = err; throw option; })
-    .then(option => {
-        const results = option.results;
+    db.getArticles(parsedurl.query)
+    .then(results => {
         const res = option.response;
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify(results));
