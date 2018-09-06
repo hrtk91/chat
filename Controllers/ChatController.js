@@ -170,12 +170,10 @@ ChatController.on('/article', function (option) {
         const username = session.username;
         const password = session.password;
 
-        db.login(username, password)
-        .then(() => {
-            return db.post({
-                sender: post.sender,
-                message: post.message
-            });
+        db.post({
+                sender: username,
+                password: password,
+                message: post.message,
         })
         .then(id => {
             res.writeHead(201, {'Content-Type': 'application/json'});
@@ -240,12 +238,15 @@ ChatController.on('/image', function (option) {
     });
     req.on('end', () => {
         const post = JSON.parse(body);
-        const user = post.sender;
+        const session = cookie.parse(req.headers.cookie || '');
+        const username = session.username;
+        const password = session.password;
         const message = post.message;
         const imageData = post.imageData;
 
         db.postImage({
-            sender: user,
+            sender: username,
+            password: password,
             message: message,
             data: imageData
         })

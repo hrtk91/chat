@@ -121,8 +121,11 @@ ChatDB.prototype.login = function (username, password) {
     return new Promise((resolve, reject) => {
         const query = 'select * from chat.users where users.username = ?';
         this.db.query(query, [username], function (err, results, fileds) {
-            if (err || !results.some(v => v))
+            if (err)
                 return reject(err || new Error('ChatDB.login: query error.'));
+
+            if (results.length <= 0)
+                return reject(new Error('results is empty.'));
 
             const bcrypt = require('bcrypt');
             if (bcrypt.compareSync(password, results[0].password))
