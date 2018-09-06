@@ -7,7 +7,8 @@ const app = require(path.join(process.cwd(), 'app.js'));
 describe('app.jsの検査', function () {
     var option = {};
     var db = null;
-    beforeEach(done => {
+    const dbPostdataLength = 30;
+    beforeAll(done => {
         option = {
             host: 'localhost',
             port: 8080,
@@ -21,11 +22,12 @@ describe('app.jsの検査', function () {
             user: 'node',
             password: 'node',
         });
-        const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`) value (?, ?, ?);'
+        const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`, `updated`) value (?, ?, ?, ?);'
         const tasks = [];
-        for (var i = 0; i < 30; i++) {
+        for (var i = 0; i < dbPostdataLength; i++) {
             var p = new Promise((resolve, reject) => {
-                db.query(insertQuery, ['testsender' + i.toString(), 'message' + i.toString(), 43], function (err, results) {
+                const date = new Date(Date.now() + (1000 * i));
+                db.query(insertQuery, ['testsender' + i.toString(), 'message' + i.toString(), 43, date], function (err, results) {
                     if (err)
                         reject(err);
                     else
@@ -35,11 +37,9 @@ describe('app.jsの検査', function () {
             tasks.push(p);
         }
         Promise.all(tasks)
-        .then(values => {
-            done();
-        });
+        .then(values => done());
     });
-    afterEach(done => {
+    afterAll(done => {
         const deleteQuerys = [
             'delete from chat.post_image;',
             'delete from chat.post;',
@@ -57,9 +57,7 @@ describe('app.jsの検査', function () {
             });
         });
         Promise.all(tasks)
-        .then(values => {
-            done();
-        });
+        .then(values => done());
     });
     describe('/articlesの取得順検査', function () {
         describe('/articles', function () {
@@ -73,14 +71,11 @@ describe('app.jsの検査', function () {
                     });
                     res.on('end', () => {
                         let data = JSON.parse(body);
-                        console.log('/articles');
-                        console.log(`data.length = ${data.length}`);
                         expect(10).toBe(data.length);
-                        data.reduce((pv, cv) => {
-                            console.log(`${pv.id} > ${cv.id}`);
-                            expect(true).toBe(pv.id > cv.id);
-                            return cv;
-                        });
+                        for (let i = 0; i < 10; i++) {
+                            const expectOrder = dbPostdataLength-i;
+                            expect(expectOrder).toBe(data[i].id);
+                        }
                         done();
                     });
                 });
@@ -88,7 +83,7 @@ describe('app.jsの検査', function () {
             });
         });
         describe('/articles?order=asc', function () {
-            it('最古のポスト10件を取得する。', function (done) {
+            it('最古のポスト10件昇順で取得する。', function (done) {
                 option.path = '/articles?order=asc';
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
@@ -98,14 +93,10 @@ describe('app.jsの検査', function () {
                     });
                     res.on('end', () => {
                         let data = JSON.parse(body);
-                        console.log(option.path);
-                        console.log(`data.length = ${data.length}`);
                         expect(10).toBe(data.length);
-                        data.reduce((pv, cv) => {
-                            console.log(`${pv.id} < ${cv.id}`);
-                            expect(true).toBe(pv.id < cv.id);
-                            return cv;
-                        });
+                        for (let i = 0; i < 10; i++) {
+                            expect(i+1).toBe(data[i].id);
+                        }
                         done();
                     });
                 });
@@ -123,14 +114,11 @@ describe('app.jsの検査', function () {
                     });
                     res.on('end', () => {
                         let data = JSON.parse(body);
-                        console.log(option.path);
-                        console.log(`data.length = ${data.length}`);
                         expect(10).toBe(data.length);
-                        data.reduce((pv, cv) => {
-                            console.log(`${pv.id} > ${cv.id}`);
-                            expect(true).toBe(pv.id > cv.id);
-                            return cv;
-                        });
+                        for (let i = 0; i < 10; i++) {
+                            const expectOrder = dbPostdataLength-i;
+                            expect(expectOrder).toBe(data[i].id);
+                        }
                         done();
                     });
                 });
@@ -151,11 +139,9 @@ describe('app.jsの検査', function () {
                         console.log(option.path);
                         console.log(`data.length = ${data.length}`);
                         expect(10).toBe(data.length);
-                        data.reduce((pv, cv) => {
-                            console.log(`${pv.id} > ${cv.id}`);
-                            expect(true).toBe(pv.id > cv.id);
-                            return cv;
-                        });
+                        for (let i = 0; i < 10; i++) {
+                            expect(dbPostdataLength-i).toBe(data[i].id);
+                        }
                         done();
                     });
                 });
@@ -177,11 +163,8 @@ describe('app.jsの検査', function () {
                     res.on('end', () => {
                         try{
                             let data = JSON.parse(body);
-                            console.log(option.path);
-                            console.log(`data.length = ${data.length}`);
                             expect(10).toBe(data.length);
                             data.reduce((pv, cv) => {
-                                console.log(`${pv.id} > ${cv.id}`);
                                 expect(true).toBe(pv.id > cv.id);
                                 return cv;
                             });
@@ -207,8 +190,6 @@ describe('app.jsの検査', function () {
                     res.on('end', () => {
                         try {
                             let data = JSON.parse(body);
-                            console.log(option.path);
-                            console.log(`data.length = ${data.length}`);
                             expect(10).toBe(data.length);
                             expect(20).toBe(data[0].id);
                             data.reduce((pv, cv) => {
@@ -237,8 +218,6 @@ describe('app.jsの検査', function () {
                     res.on('end', () => {
                         try {
                             let data = JSON.parse(body);
-                            console.log(option.path);
-                            console.log(`data.length = ${data.length}`);
                             expect(10).toBe(data.length);
                             expect(10).toBe(data[0].id);
                             data.reduce((pv, cv) => {
@@ -284,6 +263,28 @@ describe('app.jsの検査', function () {
                 req.end();
             });
         });
+        describe('/articles?originId=aa&originOrder=new', function () {
+            it('ポストIDに異常値指定', function (done) {
+                option.path = '/articles?originId=aa&originOrder=qwerty';
+                option.method = 'GET';
+                const req = http.request(option, function (res) {
+                    let body = '';
+                    res.on('data', chunk => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        let data = JSON.parse(body);
+                        expect(10).toBe(data.length);
+                        for (let i = 0; i < 10; i++) {
+                            expect(dbPostdataLength - i).toBe(data[i].id);
+                        }
+                        done();
+                    });
+                });
+                req.end();
+            });
+        });
+
 
     });
 });

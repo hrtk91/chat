@@ -67,10 +67,10 @@ ChatDB.prototype.postImage = function (option) {
 ChatDB.prototype.getArticles = function (option) {
     // asc or desc
     option = option || {};
-    const originId = (option.originId ? Math.abs(option.originId) : 0);
+    const originId = (isFinite(option.originId) ? Math.abs(option.originId) : 0);
     const originOrder = option.originOrder === 'old' ? 'old' : 'new'; 
     const order = option.order === 'asc' ? 'asc' : 'desc';
-    const num = (option.num ? Math.abs(option.num) : 0) || 10;
+    const num = (isFinite(option.num) ? Math.abs(option.num) : 0) || 10;
 
     const querys = [
         'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id '
