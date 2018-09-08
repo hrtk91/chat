@@ -42,8 +42,13 @@ describe('app.jsの検査', function () {
             user: 'node',
             password: 'node',
         });
-        Promise.all(cleanupDB(db))
-        .then(values => {
+        Promise.all(cleanupDB(db)).then(done);
+    });
+    afterAll(done => {
+        Promise.all(cleanupDB(db)).then(done);
+    });
+    describe('/articlesテスト', function () {
+        beforeAll(done => {
             const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`, `updated`) value (?, ?, ?, ?);'
             const tasks = [];
             for (var i = 0; i < dbPostdataLength; i++) {
@@ -59,195 +64,498 @@ describe('app.jsの検査', function () {
                 tasks.push(p);
             }
             Promise.all(tasks)
-            .then(values => done());
+            .then(done);
+        });
+        describe('/articlesの取得順テスト(order指定)', function () {
+            describe('/articles', function () {
+                it('最新のポスト10件を取得する。', function (done) {
+                    option.path = '/articles';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => {
+                            body += chunk;
+                        });
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                const expectOrder = dbPostdataLength-i;
+                                expect(expectOrder).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('/articles?order=asc', function () {
+                it('最古のポスト10件昇順で取得する。', function (done) {
+                    option.path = '/articles?order=asc';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => {
+                            body += chunk;
+                        });
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                expect(i+1).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('/articles?order=desc', function () {
+                it('最新のポスト10件を取得する。', function (done) {
+                    option.path = '/articles?order=desc';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                const expectOrder = dbPostdataLength-i;
+                                expect(expectOrder).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('/articles?order=qwerty', function () {
+                it('最新のポスト10件を取得する。', function (done) {
+                    option.path = '/articles?order=qwerty';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                const expectOrder = dbPostdataLength-i;
+                                expect(expectOrder).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+        });
+        describe('/articlesの取得順テスト（originId,originOrder指定）', function () {
+            describe('/articles?originId=10', function () {
+                it('ポストID10以降の最新ポスト10件を取得する。', function (done) {
+                    option.path = '/articles?originId=10';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                expect(20-i).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('/articles?originId=10&originOrder=new', function () {
+                it('ポストID10からの最新のポスト10件を取得する。', function (done) {
+                    option.path = '/articles?originId=10&originOrder=new';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                expect(20-i).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('/articles?originId=10&originOrder=old', function () {
+                it('ポストID10以前のポスト10件を取得する。', function (done) {
+                    option.path = '/articles?originId=10&originOrder=old';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                expect(10-i).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('/articles?originId=10&originOrder=qwerty', function () {
+                it('ポストID10からの最新10件取得する。', function (done) {
+                    option.path = '/articles?originId=10&originOrder=qwerty';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for(let i = 0; i < 10; i++) {
+                                expect(20-i).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('/articles?originId=aa&originOrder=new', function () {
+                it('最新のポスト10件が取得される。', function (done) {
+                    option.path = '/articles?originId=aa&originOrder=new';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            for (let i = 0; i < 10; i++) {
+                                expect(dbPostdataLength - i).toBe(data[i].id);
+                            }
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+        });
+        describe('/articlesの取得数テスト(num指定)', function () {
+            describe('./articles?num=20', function () {
+                it('取得件数が20件', function (done) {
+                    option.path = '/articles?num=20';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(20).toBe(data.length);
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('./articles?num=30', function () {
+                it('取得件数が30件', function (done) {
+                    option.path = '/articles?num=30';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(30).toBe(data.length);
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('./articles?num=31', function () {
+                it('取得件数が30件', function (done) {
+                    option.path = '/articles?num=31';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(30).toBe(data.length);
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('./articles?num=0', function () {
+                it('取得件数が10件', function (done) {
+                    option.path = '/articles?num=0';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
+            describe('./articles?num=aa', function () {
+                it('取得件数が10件', function (done) {
+                    option.path = '/articles?num=aa';
+                    option.method = 'GET';
+                    const req = http.request(option, function (res) {
+                        let body = '';
+                        res.on('data', chunk => body += chunk);
+                        res.on('end', () => {
+                            let data = JSON.parse(body);
+                            expect(10).toBe(data.length);
+                            done();
+                        });
+                    });
+                    req.end();
+                });
+            });
         });
     });
-    afterAll(done => {
-        Promise.all(cleanupDB(db)).then(values => done());
+    describe('/articleテスト', function () {
+        beforeEach(done => Promise.all(cleanupDB(db)).then(done));
+        afterEach(done => Promise.all(cleanupDB(db)).then(done));
+        describe('./article通常ケース', function () {
+            describe('./article', function () {
+                it('通常投稿', function (done) {
+                    const postData = JSON.stringify({
+                        sender: 'aaaa',
+                        password: 'aaaa',
+                        message: 'test'
+                    });
+                    option.path = '/article';
+                    option.headers = {
+                        'Content-Type': 'application/json',
+                        'Content-Length': postData.length,
+                    };
+                    option.method = 'POST';
+                    new Promise((resolve, reject) => {
+                        const req = http.request(option, resolve);
+                        req.on('error', reject);
+                        req.write(postData);
+                        req.end();
+                    })
+                    .then(res => {
+                        expect(201).toBe(res.statusCode);
+                        db.query('select * from chat.post limit 100;', function (err, results) {
+                            const article = results[0];
+                            expect(1).toBe(article.id);
+                            expect('aaaa').toBe(article.sender);
+                            expect('test').toBe(article.message);
+                            done();
+                        });
+                    });
+                });
+                it('存在しないユーザ', function (done) {
+                    const postData = JSON.stringify({
+                        sender: 'unknown',
+                        password: 'unknown',
+                        message: 'test'
+                    });
+                    option.path = '/article';
+                    option.headers = {
+                        'Content-Type': 'application/json',
+                        'Content-Length': postData.length,
+                    };
+                    option.method = 'POST';
+                    new Promise((resolve, reject) => {
+                        const req = http.request(option, resolve);
+                        req.on('error', reject);
+                        req.write(postData);
+                        req.end();
+                    })
+                    .then(res => {
+                        expect(500).toBe(res.statusCode);
+                        db.query('select * from chat.post limit 100;', function (err, results) {
+                            expect(0).toBe(results.length);
+                            done();
+                        });
+                    });
+                });
+                it('パスワード間違い', function (done) {
+                    const postData = JSON.stringify({
+                        sender: 'aaaa',
+                        password: 'unknown',
+                        message: 'test'
+                    });
+                    option.path = '/article';
+                    option.headers = {
+                        'Content-Type': 'application/json',
+                        'Content-Length': postData.length,
+                    };
+                    option.method = 'POST';
+                    new Promise((resolve, reject) => {
+                        const req = http.request(option, resolve);
+                        req.on('error', reject);
+                        req.write(postData);
+                        req.end();
+                    })
+                    .then(res => {
+                        expect(500).toBe(res.statusCode);
+                        db.query('select * from chat.post limit 100;', function (err, results) {
+                            expect(0).toBe(results.length);
+                            done();
+                        });
+                    });
+                });
+                it('255文字投稿', function (done) {
+                    const message = [...Array(255).keys()].map((v, i) => 'a').join('');
+                    const postData = JSON.stringify({
+                        sender: 'aaaa',
+                        password: 'aaaa',
+                        message: message
+                    });
+                    option.path = '/article';
+                    option.headers = {
+                        'Content-Type': 'application/json',
+                        'Content-Length': postData.length,
+                    };
+                    option.method = 'POST';
+                    new Promise((resolve, reject) => {
+                        const req = http.request(option, resolve);
+                        req.on('error', reject);
+                        req.write(postData);
+                        req.end();
+                    })
+                    .then(res => {
+                        expect(201).toBe(res.statusCode);
+                        db.query('select * from chat.post limit 100;', function (err, results) {
+                            expect(message).toBe(results[0].message);
+                            done();
+                        });
+                    });
+                });
+                it('256文字投稿', function (done) {
+                    const message = [...Array(256).keys()].map((v, i) => 'a').join('');
+                    const postData = JSON.stringify({
+                        sender: 'aaaa',
+                        password: 'aaaa',
+                        message: message
+                    });
+                    option.path = '/article';
+                    option.headers = {
+                        'Content-Type': 'application/json',
+                        'Content-Length': postData.length,
+                    };
+                    option.method = 'POST';
+                    new Promise((resolve, reject) => {
+                        const req = http.request(option, resolve);
+                        req.on('error', reject);
+                        req.write(postData);
+                        req.end();
+                    })
+                    .then(res => {
+                        expect(500).toBe(res.statusCode);
+                        db.query('select * from chat.post limit 100;', function (err, results) {
+                            expect(0).toBe(results.length);
+                            done();
+                        });
+                    });
+                });
+            });
+        });
     });
-    describe('/articlesの取得順検査', function () {
-        describe('/articles', function () {
-            it('最新のポスト10件を取得する。', function (done) {
-                option.path = '/articles';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
+    describe('/imageテスト', function () {
+        beforeEach(done => Promise.all(cleanupDB(db)).then(done));
+        afterEach(done => Promise.all(cleanupDB(db)).then(done));
+        describe('/image通常ケース', function () {
+            describe('/image', function () {
+                it('通常投稿', function (done) {
+                    const postData = JSON.stringify({
+                        sender: 'aaaa',
+                        password: 'aaaa',
+                        message: 'test',
+                        imageData: 'TEST'
                     });
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            const expectOrder = dbPostdataLength-i;
-                            expect(expectOrder).toBe(data[i].id);
-                        }
-                        done();
-                    });
-                });
-                req.end();
-            });
-        });
-        describe('/articles?order=asc', function () {
-            it('最古のポスト10件昇順で取得する。', function (done) {
-                option.path = '/articles?order=asc';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            expect(i+1).toBe(data[i].id);
-                        }
-                        done();
+                    option.path = '/image';
+                    option.headers = {
+                        'Content-Type': 'application/json',
+                        'Content-Length': postData.length,
+                    };
+                    option.method = 'POST';
+                    new Promise((resolve, reject) => {
+                        const req = http.request(option, resolve);
+                        req.on('error', reject);
+                        req.write(postData);
+                        req.end();
+                    })
+                    .then(res => {
+                        expect(201).toBe(res.statusCode);
+                        db.query('select * from chat.post left join chat.post_image on post.id = post_image.post_id limit 100;', function (err, results) {
+                            const article = results[0];
+                            expect(1).toBe(article.id);
+                            expect('aaaa').toBe(article.sender);
+                            expect('test').toBe(article.message);
+                            expect('TEST').toBe(article.data);
+                            done();
+                        });
                     });
                 });
-                req.end();
-            });
-        });
-        describe('/articles?order=desc', function () {
-            it('最新のポスト10件を取得する。', function (done) {
-                option.path = '/articles?order=desc';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => body += chunk);
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            const expectOrder = dbPostdataLength-i;
-                            expect(expectOrder).toBe(data[i].id);
-                        }
-                        done();
-                    });
-                });
-                req.end();
-            });
-        });
-        describe('/articles?order=qwerty', function () {
-            it('最新のポスト10件を取得する。', function (done) {
-                option.path = '/articles?order=qwerty';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => body += chunk);
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            const expectOrder = dbPostdataLength-i;
-                            expect(expectOrder).toBe(data[i].id);
-                        }
-                        done();
-                    });
-                });
-                req.end();
             });
         });
     });
-
-    describe('/articlesの取得順調査（起点ID指定）', function () {
-        describe('/articles?originId=10', function () {
-            it('ポストID10以降の最新ポスト10件を取得する。', function (done) {
-                option.path = '/articles?originId=10';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => body += chunk);
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            expect(20-i).toBe(data[i].id);
-                        }
-                        done();
-                    });
+    describe('/user/loginテスト', function () {
+        describe('/user/login', function () {
+            it('通常ケース',  done => {
+                const postData = JSON.stringify({
+                    sender: 'aaaa',
+                    password: 'aaaa',
                 });
-                req.end();
+                option.path = '/user/login';
+                option.headers = {
+                    'Content-Type': 'application/json',
+                    'Content-Length': postData.length,
+                };
+                option.method = 'POST';
+                new Promise((resolve, reject) => {
+                    const req = http.request(option, resolve);
+                    req.on('error', reject);
+                    req.write(postData);
+                    req.end();
+                })
+                .then(res => {
+                    expect(200).toBe(res.statusCode);
+                    done();
+                });
             });
         });
-        describe('/articles?originId=10&originOrder=new', function () {
-            it('ポストID10からの最新のポスト10件を取得する。', function (done) {
-                option.path = '/articles?originId=10&originOrder=new';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => body += chunk);
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            expect(20-i).toBe(data[i].id);
-                        }
-                        done();
-                    });
-                });
+    });
+    describe('ルーティングテスト', function () {
+        it('../app.js', done => {
+            option.path = '/../app.js';
+            new Promise((resolve, reject) => {
+                const req = http.request(option, resolve);
+                req.on('error', reject);
                 req.end();
+            })
+            .then(res => {
+                expect(403).toBe(res.statusCode);
+                let body = '';
+                res.on('data', chunk => body += chunk);
+                res.on('end', () => {
+                    expect('403 Forriden.').toBe(body);
+                    done();
+                });
             });
         });
-        describe('/articles?originId=10&originOrder=old', function () {
-            it('ポストID10以前のポスト10件を取得する。', function (done) {
-                option.path = '/articles?originId=10&originOrder=old';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => body += chunk);
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            expect(10-i).toBe(data[i].id);
-                        }
-                        done();
-                    });
-                });
-                req.end();
-            });
-        });
-        describe('/articles?originId=10&originOrder=qwerty', function () {
-            it('ポストID10から10件取得する。', function (done) {
-                option.path = '/articles?originId=10&originOrder=qwerty';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => body += chunk);
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for(let i = 0; i < 10; i++) {
-                            expect(20-i).toBe(data[i].id);
-                        }
-                        done();
-                    });
-                });
-                req.end();
-            });
-        });
-        describe('/articles?originId=aa&originOrder=new', function () {
-            it('最新のポスト10件が取得される。', function (done) {
-                option.path = '/articles?originId=aa&originOrder=new';
-                option.method = 'GET';
-                const req = http.request(option, function (res) {
-                    let body = '';
-                    res.on('data', chunk => body += chunk);
-                    res.on('end', () => {
-                        let data = JSON.parse(body);
-                        expect(10).toBe(data.length);
-                        for (let i = 0; i < 10; i++) {
-                            expect(dbPostdataLength - i).toBe(data[i].id);
-                        }
-                        done();
-                    });
-                });
-                req.end();
-            });
-        });
-
-
     });
 });

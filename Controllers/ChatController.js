@@ -57,6 +57,12 @@ ChatController.defaultRooting(function (option) {
     const filepath = path.join(process.cwd(), 'web', query.pathname);
     const ext = path.extname(filepath);
 
+    if (query.pathname.indexOf('../') !== -1 || query.pathname.indexOf('..\\') !== -1) {
+        res.writeHead(403, {'Content-Type' : 'text/html'});
+        res.end('403 Forriden.')
+        return;
+    }
+
     if (ext && fs.existsSync(filepath) === true) {
         setHeaderFromExtension(ext, res);
         readFile(filepath).then(data => res.end(data));
@@ -65,6 +71,7 @@ ChatController.defaultRooting(function (option) {
     } else {
         res.writeHead(404, {'Content-Type' : 'text/html'});
         res.end('404 not found.');
+        return;
     }
 });
 
@@ -114,7 +121,7 @@ ChatController.on('/user/create', function (option) {
 ChatController.on('/user/login', function (option) {
     const req = option.request;
     const res = option.response;
-    if (req.method !== 'GET') {
+    if (req.method !== 'GET' && req.method !== 'POST') {
         res.writeHead(400, {'Content-Type': 'text/plain'});
         res.end('400 Bad Request. Please use GET method.');
         return false;
@@ -123,19 +130,25 @@ ChatController.on('/user/login', function (option) {
 }, option => {
     const req = option.request;
     const res = option.response;
-    const session = cookie.parse(req.headers.cookie);
-    const username = session.username;
-    const password = session.password;
 
-    return db.login(username, password)
-    .then(() => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end();
-    })
-    .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/plain'});
-        res.end('500 Server Internal Error.');
-        console.error(err);
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', function () {
+        const post = JSON.parse(body);
+        const session = cookie.parse(req.headers.cookie || '');
+        const username = post.sender || session.username;
+        const password = post.password || session.password;
+    
+        db.login(username, password)
+        .then(() => {
+            res.writeHead(200, {'Content-Type': 'application/json'});
+            res.end();
+        })
+        .catch(err => {
+            res.writeHead(500, {'Content-Type': 'text/plain'});
+            res.end('500 Server Internal Error.');
+            console.error(err);
+        });
     });
 });
 
@@ -167,8 +180,8 @@ ChatController.on('/article', function (option) {
         const post = JSON.parse(body);
 
         const session = cookie.parse(req.headers.cookie || '');
-        const username = session.username;
-        const password = session.password;
+        const username = post.sender || session.username;
+        const password = post.password || session.password;
 
         db.post({
                 sender: username,
@@ -239,8 +252,8 @@ ChatController.on('/image', function (option) {
     req.on('end', () => {
         const post = JSON.parse(body);
         const session = cookie.parse(req.headers.cookie || '');
-        const username = session.username;
-        const password = session.password;
+        const username = post.sender || session.username;
+        const password = post.password || session.password;
         const message = post.message;
         const imageData = post.imageData;
 
