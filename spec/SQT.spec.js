@@ -4,6 +4,26 @@ const http = require('http');
 const mysql = require('mysql');
 const app = require(path.join(process.cwd(), 'app.js'));
 
+function cleanupDB(db) {
+    const deleteQuerys = [
+        'delete from chat.post_image;',
+        'delete from chat.post;',
+        'alter table chat.post_image auto_increment = 1;',
+        'alter table chat.post auto_increment = 1;'
+    ];
+    const tasks = deleteQuerys.map(query => {
+        return new Promise((resolve, reject) => {
+            db.query(query, function (err, results) {
+            if (err)
+                reject(err);
+            else    
+                resolve(err);
+            });
+        });
+    });
+    return tasks;
+}
+
 describe('app.jsの検査', function () {
     var option = {};
     var db = null;
@@ -22,42 +42,28 @@ describe('app.jsの検査', function () {
             user: 'node',
             password: 'node',
         });
-        const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`, `updated`) value (?, ?, ?, ?);'
-        const tasks = [];
-        for (var i = 0; i < dbPostdataLength; i++) {
-            var p = new Promise((resolve, reject) => {
-                const date = new Date(Date.now() + (1000 * i));
-                db.query(insertQuery, ['testsender' + i.toString(), 'message' + i.toString(), 43, date], function (err, results) {
-                    if (err)
-                        reject(err);
-                    else
-                        resolve(results);
+        Promise.all(cleanupDB(db))
+        .then(values => {
+            const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`, `updated`) value (?, ?, ?, ?);'
+            const tasks = [];
+            for (var i = 0; i < dbPostdataLength; i++) {
+                var p = new Promise((resolve, reject) => {
+                    const date = new Date(Date.now() + (1000 * i));
+                    db.query(insertQuery, ['testsender' + i.toString(), 'message' + i.toString(), 43, date], function (err, results) {
+                        if (err)
+                            reject(err);
+                        else
+                            resolve(results);
+                    });
                 });
-            });
-            tasks.push(p);
-        }
-        Promise.all(tasks)
-        .then(values => done());
+                tasks.push(p);
+            }
+            Promise.all(tasks)
+            .then(values => done());
+        });
     });
     afterAll(done => {
-        const deleteQuerys = [
-            'delete from chat.post_image;',
-            'delete from chat.post;',
-            'alter table chat.post_image auto_increment = 1;',
-            'alter table chat.post auto_increment = 1;'
-        ];
-        const tasks = deleteQuerys.map(query => {
-            return new Promise((resolve, reject) => {
-                db.query(query, function (err, results) {
-                if (err)
-                    reject(err);
-                else    
-                    resolve(err);
-                });
-            });
-        });
-        Promise.all(tasks)
-        .then(values => done());
+        Promise.all(cleanupDB(db)).then(values => done());
     });
     describe('/articlesの取得順検査', function () {
         describe('/articles', function () {
@@ -109,9 +115,7 @@ describe('app.jsの検査', function () {
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
                     let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
+                    res.on('data', chunk => body += chunk);
                     res.on('end', () => {
                         let data = JSON.parse(body);
                         expect(10).toBe(data.length);
@@ -131,16 +135,13 @@ describe('app.jsの検査', function () {
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
                     let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
+                    res.on('data', chunk => body += chunk);
                     res.on('end', () => {
                         let data = JSON.parse(body);
-                        console.log(option.path);
-                        console.log(`data.length = ${data.length}`);
                         expect(10).toBe(data.length);
                         for (let i = 0; i < 10; i++) {
-                            expect(dbPostdataLength-i).toBe(data[i].id);
+                            const expectOrder = dbPostdataLength-i;
+                            expect(expectOrder).toBe(data[i].id);
                         }
                         done();
                     });
@@ -157,22 +158,14 @@ describe('app.jsの検査', function () {
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
                     let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
+                    res.on('data', chunk => body += chunk);
                     res.on('end', () => {
-                        try{
-                            let data = JSON.parse(body);
-                            expect(10).toBe(data.length);
-                            data.reduce((pv, cv) => {
-                                expect(true).toBe(pv.id > cv.id);
-                                return cv;
-                            });
-                        } catch (e) {
-                            fail(e);
-                        } finally {
-                            done();
+                        let data = JSON.parse(body);
+                        expect(10).toBe(data.length);
+                        for (let i = 0; i < 10; i++) {
+                            expect(20-i).toBe(data[i].id);
                         }
+                        done();
                     });
                 });
                 req.end();
@@ -184,23 +177,14 @@ describe('app.jsの検査', function () {
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
                     let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
+                    res.on('data', chunk => body += chunk);
                     res.on('end', () => {
-                        try {
-                            let data = JSON.parse(body);
-                            expect(10).toBe(data.length);
-                            expect(20).toBe(data[0].id);
-                            data.reduce((pv, cv) => {
-                                expect(`${pv.id} > ${cv.id} = true`).toBe(`${pv.id} > ${cv.id} = ` + (pv.id > cv.id));
-                                return cv;
-                            });
-                        } catch (e) {
-                            fail(e);
-                        } finally {
-                            done();
+                        let data = JSON.parse(body);
+                        expect(10).toBe(data.length);
+                        for (let i = 0; i < 10; i++) {
+                            expect(20-i).toBe(data[i].id);
                         }
+                        done();
                     });
                 });
                 req.end();
@@ -212,66 +196,45 @@ describe('app.jsの検査', function () {
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
                     let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
+                    res.on('data', chunk => body += chunk);
                     res.on('end', () => {
-                        try {
-                            let data = JSON.parse(body);
-                            expect(10).toBe(data.length);
-                            expect(10).toBe(data[0].id);
-                            data.reduce((pv, cv) => {
-                                expect(`${pv.id} > ${cv.id} = true`).toBe(`${pv.id} > ${cv.id} = ` + (pv.id > cv.id));
-                                return cv;
-                            });
-                        } catch (e) {
-                            fail(e);
-                        } finally {
-                            done();
+                        let data = JSON.parse(body);
+                        expect(10).toBe(data.length);
+                        for (let i = 0; i < 10; i++) {
+                            expect(10-i).toBe(data[i].id);
                         }
+                        done();
                     });
                 });
                 req.end();
             });
         });
         describe('/articles?originId=10&originOrder=qwerty', function () {
-            it('ポストID10以前のポスト10件を取得する。', function (done) {
+            it('ポストID10から10件取得する。', function (done) {
                 option.path = '/articles?originId=10&originOrder=qwerty';
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
                     let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
+                    res.on('data', chunk => body += chunk);
                     res.on('end', () => {
-                        try {
-                            let data = JSON.parse(body);
-                            console.log(option.path);
-                            console.log(`data.length = ${data.length}`);
-                            expect(10).toBe(data.length);
-                            data.reduce((pv, cv) => {
-                                expect(`${pv.id} > ${cv.id} = true`).toBe(`${pv.id} > ${cv.id} = ` + (pv.id > cv.id));
-                                return cv;
-                            });
-                        } catch (e) {
-                            fail(e);
-                        } finally {
-                            done();
+                        let data = JSON.parse(body);
+                        expect(10).toBe(data.length);
+                        for(let i = 0; i < 10; i++) {
+                            expect(20-i).toBe(data[i].id);
                         }
+                        done();
                     });
                 });
                 req.end();
             });
         });
         describe('/articles?originId=aa&originOrder=new', function () {
-            it('ポストIDに異常値指定', function (done) {
-                option.path = '/articles?originId=aa&originOrder=qwerty';
+            it('最新のポスト10件が取得される。', function (done) {
+                option.path = '/articles?originId=aa&originOrder=new';
                 option.method = 'GET';
                 const req = http.request(option, function (res) {
                     let body = '';
-                    res.on('data', chunk => {
-                        body += chunk;
-                    });
+                    res.on('data', chunk => body += chunk);
                     res.on('end', () => {
                         let data = JSON.parse(body);
                         expect(10).toBe(data.length);
