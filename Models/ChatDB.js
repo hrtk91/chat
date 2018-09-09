@@ -138,19 +138,24 @@ ChatDB.prototype.login = function (username, password) {
 ChatDB.prototype.createUser = function (username, password) {
     return this.isExists(username)
     .then(result => {
-        if (result === true) throw new Error(`${username} is already exists.`);
+        if (result === true)
+            throw new Error(`${username} is already exists.`);
 
         const bcrypt = require('bcrypt');
         const saltRounds = 10;
         const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
         const query = 'insert into chat.users (`username`, `password`) value(?, ?)';
-        this.db.query(query, [username, hashedPassword], function (err, results, fields) {
-            if (!err)  {
-                console.info('user ' + username + ' created!');
-            } else {
-                throw new Error('user ' + username + ' create have failed.');
-            }
+        return new Promise((resolve, reject) => {
+            this.db.query(query, [username, hashedPassword], function (err, results, fields) {
+                if (!err) {
+                    console.info('user ' + username + ' created!');
+                    resolve();
+                }
+                else {
+                    reject(new Error('user ' + username + ' create have failed.'));
+                }
+            });
         });
     });
 }

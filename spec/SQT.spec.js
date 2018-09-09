@@ -539,8 +539,47 @@ describe('app.jsの検査', function () {
             });
         });
     });
+    describe('/user/createテスト', function () {
+        beforeEach(done => {
+            db.query('delete from chat.users where users.username = "foo";', done);
+            jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+        });
+        afterEach(done => {
+            db.query('delete from chat.users where users.username = "foo";', done);
+            jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
+        });
+        it('ユーザfoo作成', done => {
+            const postData = JSON.stringify({
+                username: 'foo',
+                password: 'foo',
+            });
+            option.headers = {
+                'Content-Type': 'application/json',
+                'Content-Length': postData.length,
+            };
+            option.path = '/user/create';
+            option.method = 'POST';
+            new Promise((resolve, reject) => {
+                const req = http.request(option, resolve);
+                req.on('error', reject);
+                req.write(postData);
+                req.end();
+            })
+            .then(res => {
+                const post = JSON.parse(postData);
+                expect(201).toBe(res.statusCode);
+                db.query('select * from chat.users where users.username = ?;',
+                    post.username,
+                    function (err, results) {
+                        expect(post.username).toBe(results[0].username);
+                        done();
+                    }
+                );
+            });
+        });
+    });
     describe('ルーティングテスト', function () {
-        it('../app.js', done => {
+        it('/../app.js', done => {
             option.path = '/../app.js';
             new Promise((resolve, reject) => {
                 const req = http.request(option, resolve);
@@ -552,7 +591,24 @@ describe('app.jsの検査', function () {
                 let body = '';
                 res.on('data', chunk => body += chunk);
                 res.on('end', () => {
-                    expect('403 Forriden.').toBe(body);
+                    expect('403 Forbidden.').toBe(body);
+                    done();
+                });
+            });
+        });
+        it('/..\\app.js', done => {
+            option.path = '/..\\app.js';
+            new Promise((resolve, reject) => {
+                const req = http.request(option, resolve);
+                req.on('error', reject);
+                req.end();
+            })
+            .then(res => {
+                expect(403).toBe(res.statusCode);
+                let body = '';
+                res.on('data', chunk => body += chunk);
+                res.on('end', () => {
+                    expect('403 Forbidden.').toBe(body);
                     done();
                 });
             });

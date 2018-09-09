@@ -59,7 +59,7 @@ ChatController.defaultRooting(function (option) {
 
     if (query.pathname.indexOf('../') !== -1 || query.pathname.indexOf('..\\') !== -1) {
         res.writeHead(403, {'Content-Type' : 'text/html'});
-        res.end('403 Forriden.')
+        res.end('403 Forbidden.')
         return;
     }
 
@@ -101,20 +101,25 @@ ChatController.on('/user/create', function (option) {
 }, option => {
     const req = option.request;
     const res = option.response;
-    const session = cookie.parse(req.headers.cookie);
-    const username = session.username;
-    const password = session.password;
 
-    return db.createUser(username, password)
-    .then(option => {
-        const res = option.response;
-        res.writeHead(201, {'Content-Type': 'application/json'});
-        res.end();
-    })
-    .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/plain'});
-        res.end('500 Server Internal Error.');
-        console.error(err);
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', function () {
+        const post = JSON.parse(body || '{}');
+        const session = cookie.parse(req.headers.cookie || '');
+        const username = post.username || session.username;
+        const password = post.password || session.password;
+    
+        db.createUser(username, password)
+        .then(() => {
+            res.writeHead(201, {'Content-Type': 'application/json'});
+            res.end();
+        })
+        .catch(err => {
+            res.writeHead(500, {'Content-Type': 'text/plain'});
+            res.end('500 Server Internal Error.');
+            console.error(err);
+        });
     });
 });
 
@@ -134,7 +139,7 @@ ChatController.on('/user/login', function (option) {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', function () {
-        const post = JSON.parse(body);
+        const post = JSON.parse(body || '{}');
         const session = cookie.parse(req.headers.cookie || '');
         const username = post.sender || session.username;
         const password = post.password || session.password;
