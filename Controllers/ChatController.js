@@ -4,8 +4,8 @@ const cookie = require('cookie');
 const url = require('url');
 const path = require('path');
 const fs = require('fs');
-const Rooter = require('../Models/Rooter.js');
-const ChatDB = require('../Models/ChatDB.js');
+const Rooter = require(path.join(process.cwd(), '/Models/Rooter.js'));
+const ChatDB = require(path.join(process.cwd(), '/Models/ChatDB.js'));
 
 const ChatController = new Rooter();
 const db = new ChatDB({
