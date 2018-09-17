@@ -10,11 +10,11 @@ const logoutButton = $('#logout_button');
 // ページ読み込み処理
 $('<div/>').appendTo('body').load('login.html', function () {
     const login_module = new LoginModule();
-    const dialog = login_module.dom.dialog;
+    const dialog = login_module;
     const username = $(login_module.dom.input.username).val();
     const password = $(login_module.dom.input.password).val();
     if (username && password) {
-        login_module.login();
+        dialog.login();
     } else {
         dialog.showModal();
     }
@@ -47,7 +47,7 @@ sendButton.on('click', (e) => {
     } else {
         const dataURL = img.src;
         const data = dataURL.substring(dataURL.indexOf(',') + 1);
-        fetch('./image', {
+        fetch('/image', {
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
             body: JSON.stringify({

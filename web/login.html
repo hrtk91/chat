@@ -5,7 +5,7 @@ function LoginModule() {
     this.username = '';
     this.password = '';
     this.dom = {
-        dialog: document.getElementById('login_dialog'),
+        dialog: $('#login_dialog'),
         button: {
             login: $('#login_button'),
             newcomer: $('#newcomer_button')
@@ -15,6 +15,32 @@ function LoginModule() {
             password: $('#password_text')
         }
     };
+    this.show = function () {
+        this.dom.dialog.css('display', 'block');
+    }
+    this.showModal = function () {
+        const backscreen = $('<div id="backscreen"></div>')
+        backscreen
+            .css('background-color', '#444')
+            .css('opacity', '0.4')
+            .css('width', '100%')
+            .css('height', '100%')
+            .css('position', 'fixed')
+            .css('top', '0px')
+            .css('bottom', '0px')
+            .css('left', '0px')
+            .css('right', '0px')
+            .css('margin', 'auto')
+            .css('z-index', '0')
+        $('body').append(backscreen);
+        this.dom.dialog.css('z-index', '1')
+        this.show();
+    }
+    this.close = function () {
+        $('#backscreen').remove();
+        //this.dom.dialog.css('display', 'none');
+        this.dom.dialog.remove();
+    }
     this.login = function (evt) {
         this.username = $('#username_text').val();
         this.password = $('#password_text').val();
@@ -29,16 +55,17 @@ function LoginModule() {
 
         fetch('./user/login', { method: 'GET' })
         .then(res => {
-            if (!res.ok)
+            if (!res.ok) {
                 throw new Error('ログインエラー');
-            this.dom.dialog.close();
+            }
+            this.close();
         })
         .catch(err => {
             alert(err.message);
             this.username = '';
             this.password = '';
-            // Cookies.remove('username');
-            // Cookies.remove('password');
+            Cookies.remove('username');
+            Cookies.remove('password');
         });
     }
     this.createUser = function (evt) {
@@ -55,12 +82,21 @@ function LoginModule() {
             alert(err.message);
             this.username = '';
             this.password = '';
-            // Cookies.remove('username');
-            // Cookies.remove('password');
+            Cookies.remove('username');
+            Cookies.remove('password');
         });
     }
     this.dom.button.login.on('click', this.login.bind(this));
     this.dom.button.newcomer.on('click', this.createUser.bind(this));
+
+    function loginEvent(evt) {
+        const key = evt.keyCode;
+        if (key === 0x0D) {
+            this.login();
+        }
+    }
+    this.dom.input.username.on('keyup', loginEvent.bind(this));
+    this.dom.input.password.on('keyup', loginEvent.bind(this));
 }
 
 (function () {
@@ -76,13 +112,31 @@ if (username && password) {
 })();
 
 </script>
-<dialog id="login_dialog">
+<style>
+    #login_dialog {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
+        margin: auto;
+        display: none;
+        min-width: 20%;
+        min-height: 20%;
+        max-height: 50%;
+        max-width: 50%;
+        background-color: #ffffff;
+        border: solid 3px #444;
+        padding: 10px;
+    };
+</style>
+<div id="login_dialog">
     <h3>ログイン</h3>
     <p>
-    <input type="text" id="username_text" placeholder="ユーザ名"/>
-    <br/>
-    <input type="password" id="password_text" placeholder="パスワード"/>
+        <input type="text" id="username_text" placeholder="ユーザ名"/>
+        <br/>
+        <input type="password" id="password_text" placeholder="パスワード"/>
     </p>
     <button id="login_button">ログイン</button>
     <button id="newcomer_button">アカウント作成</button>
-</dialog>
+</div>
