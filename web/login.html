@@ -53,7 +53,7 @@ function LoginModule() {
         Cookies.set('username', this.username);
         Cookies.set('password', this.password);
 
-        fetch('./user/login', { method: 'GET' })
+        fetch('./user/login', { method: 'GET', credentials: 'include', })
         .then(res => {
             if (!res.ok) {
                 throw new Error('ログインエラー');
