@@ -37,12 +37,16 @@ sendButton.on('click', (e) => {
         fetch('/article', {
             headers: { 'content-type': 'application/json' },
             method: 'POST',
-            body: JSON.stringify({ sender: sender, message: message })
+            body: JSON.stringify({ sender: sender, message: message }),
+            credentials: 'same-origin',
         })
         .then(res => {
             if (!res.ok) throw new Error('メッセージの送信に失敗しました。');
             textarea.val('');
             fetchArticles();
+        })
+        .catch(err => {
+            alert(err.message);
         });
     } else {
         const dataURL = img.src;

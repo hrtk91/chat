@@ -26,12 +26,13 @@ ChatDB.prototype.connect = function () {
     });
 }
 ChatDB.prototype.post = function (option) {
-    const sender = option.sender;
-    const message = option.message;
+    const username = option.sender || '';
+    const password = option.password || '';
+    const message = option.message || '';
     const query = 'insert into chat.post (`sender`,`message`, `user_id`) value (?, ?, ?);';
-    return this.login(option.sender, option.password).then(id => { 
+    return this.login(username, password).then(id => { 
         return new Promise((resolve, reject) => {
-            this.db.query(query, [sender, message, id], function (err, results) {
+            this.db.query(query, [username, message, id], function (err, results) {
                 if (!err) resolve(results.insertId);
                 else      reject(err);
             });
@@ -125,13 +126,14 @@ ChatDB.prototype.login = function (username, password) {
                 return reject(err || new Error('ChatDB.login: query error.'));
 
             if (results.length <= 0)
-                return reject(new Error('results is empty.'));
+                return reject(new Error('ChatDB.login: user password not matched.'));
 
+            const result = results[0];
             const bcrypt = require('bcrypt');
-            if (bcrypt.compareSync(password, results[0].password))
-                resolve(results[0].id);
+            if (bcrypt.compareSync(password, result.password))
+                resolve(result.id);
             else
-                reject('ChatDB.prototype.login: user password not matched.');
+                reject('ChatDB.login: password not match.');
         });
     });
 }
