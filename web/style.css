@@ -1,6 +1,13 @@
+/*
 body {
-    max-width: 600px;
+    max-width: 540px;
 }
+*/
+
+#contents {
+    max-width: 540px;
+}
+
 label[for="upload_button"] {
     color: #ffbb00;
     border: dashed;
@@ -58,5 +65,12 @@ button:active {
 
 .article .article_header span {
     padding-left: 10px;
-    font-size: 0.5rem;
+}
+
+.article .article_header .sender {
+    display: inline;
+}
+
+.article .article_header .post_id {
+    display: none;
 }

@@ -22,6 +22,14 @@ $('<div/>').appendTo('body').load('login.html', function () {
 fetchArticles().catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
 // ここまで
 
+document.addEventListener('scroll', function (evt) {
+    const y = window.scrollY;
+    const offset = window.innerHeight;
+    console.log(y);
+    console.log(offset);
+    console.log(y-offset);
+});
+
 textarea.on('keyup', function (evt) {
     const key = evt.keyCode;
     if (evt.ctrlKey && key === 0x0D) {
@@ -181,6 +189,7 @@ function fetchArticles(url) {
 }
 
 function Article(article) {
+    const id = article.id || -1;
     const sender = article.sender || '';
     const message = article.message || '';
     const date = article.updated;
@@ -206,8 +215,10 @@ function Article(article) {
     const header =
         $('<div class="article_header"></div>')
         .append(
-            $(`<h3>${sender}</h3>`)
+            $('<span></span>')
+            .append(`<h2 class="sender">${sender}</h2>`)
             .append(`<span class="post_time">posted at:${create}</span>`)
+            .append(`<span class="post_id">${id}</span>`)
         );
     const body =
         $('<div class="article_body"></div>')
