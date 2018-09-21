@@ -22,14 +22,6 @@ $('<div/>').appendTo('body').load('login.html', function () {
 fetchArticles().catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
 // ここまで
 
-document.addEventListener('scroll', function (evt) {
-    const y = window.scrollY;
-    const offset = window.innerHeight;
-    console.log(y);
-    console.log(offset);
-    console.log(y-offset);
-});
-
 textarea.on('keyup', function (evt) {
     const key = evt.keyCode;
     if (evt.ctrlKey && key === 0x0D) {
@@ -51,6 +43,7 @@ sendButton.on('click', (e) => {
         .then(res => {
             if (!res.ok) throw new Error('メッセージの送信に失敗しました。');
             textarea.val('');
+            clearArticles();
             fetchArticles();
         })
         .catch(err => {
@@ -75,6 +68,7 @@ sendButton.on('click', (e) => {
             }
             img.remove();
             textarea.val('');
+            clearArticles();
             fetchArticles();
         });
     }
@@ -180,8 +174,7 @@ function fetchArticles(url) {
             x.created = new Date(x.created);
             x.updated = new Date(x.updated);
             return x;
-        })
-        .sort((a,b) => b.updated - a.updated);
+        }).sort((a,b) => b.updated - a.updated);
 
         return articles;
     })
@@ -233,9 +226,23 @@ function Article(article) {
         .append(footer);
 }
 
-function restructArticles(articles) {
+function clearArticles() {
     $('#articles').empty();
+}
+
+function restructArticles(articles) {
     articles.forEach(article => Article(article).appendTo('#articles'));
+    const ids = articles.map(x => x.id);
+    const min = Math.min(...ids);
+    if (min > 1) {
+        const nextButton = $('<button id="next_post">次の投稿</button>');
+        nextButton.appendTo('#articles');
+        nextButton.one('click', function (evt) {
+            nextButton.remove();
+            fetchArticles(`./articles?originId=${min-1}&originOrder=old`)
+            .catch(err => alert(err));
+        });
+    }
 }
 
 /*
