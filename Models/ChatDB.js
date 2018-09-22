@@ -66,25 +66,24 @@ ChatDB.prototype.postImage = function (option) {
     });
 }
 ChatDB.prototype.getArticles = function (option) {
-    // asc or desc
     option = option || {};
-    const originId = (isFinite(option.originId) ? Math.abs(option.originId) : 0);
-    const originOrder = option.originOrder === 'old' ? 'old' : 'new'; 
-    const order = option.order === 'asc' ? 'asc' : 'desc';
+    const originId = isFinite(option.originId) ? Math.abs(option.originId) : 0;
+    const timeseries = (option.timeseries === 'old') ? 'old' : 'new'; 
+    const order = (option.order === 'asc') ? 'asc' : 'desc';
     const num = (isFinite(option.num) ? Math.abs(option.num) : 0) || 10;
 
     const querys = [
         'select post.id, post.sender, post.message, post.created, post.updated, post_image.data as image from chat.post left join chat.post_image on post.id = post_image.post_id '
     ];
     
-    if (originOrder === 'new')
+    if (timeseries === 'new')
         querys.push('where post.id >= ? ');
-    else if (originOrder === 'old')
+    else if (timeseries === 'old')
         querys.push('where post.id <= ? ');
 
-    if (originId !== 0 && originOrder === 'new')
+    if (originId !== 0 && timeseries === 'new')
         querys.push('and post.id <= ' + (originId + num).toString() + ' ');
-    else if (originId !== 0 && originOrder === 'old')
+    else if (originId !== 0 && timeseries === 'old')
         querys.push('and post.id >= ' + (originId - num).toString() + ' ');
     
     if (order === 'asc')

@@ -239,7 +239,7 @@ function restructArticles(articles) {
         nextButton.appendTo('#articles');
         nextButton.one('click', function (evt) {
             nextButton.remove();
-            fetchArticles(`./articles?originId=${min-1}&originOrder=old`)
+            fetchArticles(`./articles?originId=${min-1}&timeseries=old`)
             .catch(err => alert(err));
         });
     }

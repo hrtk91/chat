@@ -151,7 +151,7 @@ describe('app.jsの検査', function () {
                 });
             });
         });
-        describe('/articlesの取得順テスト（originId,originOrder指定）', function () {
+        describe('/articlesの取得順テスト（originId,timeseries指定）', function () {
             describe('/articles?originId=10', function () {
                 it('ポストID10以降の最新ポスト10件を取得する。', function (done) {
                     option.path = '/articles?originId=10';
@@ -171,9 +171,9 @@ describe('app.jsの検査', function () {
                     req.end();
                 });
             });
-            describe('/articles?originId=10&originOrder=new', function () {
+            describe('/articles?originId=10&timeseries=new', function () {
                 it('ポストID10からの最新のポスト10件を取得する。', function (done) {
-                    option.path = '/articles?originId=10&originOrder=new';
+                    option.path = '/articles?originId=10&timeseries=new';
                     option.method = 'GET';
                     const req = http.request(option, function (res) {
                         let body = '';
@@ -190,9 +190,9 @@ describe('app.jsの検査', function () {
                     req.end();
                 });
             });
-            describe('/articles?originId=10&originOrder=old', function () {
+            describe('/articles?originId=10&timeseries=old', function () {
                 it('ポストID10以前のポスト10件を取得する。', function (done) {
-                    option.path = '/articles?originId=10&originOrder=old';
+                    option.path = '/articles?originId=10&timeseries=old';
                     option.method = 'GET';
                     const req = http.request(option, function (res) {
                         let body = '';
@@ -209,9 +209,9 @@ describe('app.jsの検査', function () {
                     req.end();
                 });
             });
-            describe('/articles?originId=10&originOrder=qwerty', function () {
+            describe('/articles?originId=10&timeseries=qwerty', function () {
                 it('ポストID10からの最新10件取得する。', function (done) {
-                    option.path = '/articles?originId=10&originOrder=qwerty';
+                    option.path = '/articles?originId=10&timeseries=qwerty';
                     option.method = 'GET';
                     const req = http.request(option, function (res) {
                         let body = '';
@@ -228,9 +228,9 @@ describe('app.jsの検査', function () {
                     req.end();
                 });
             });
-            describe('/articles?originId=aa&originOrder=new', function () {
+            describe('/articles?originId=aa&timeseries=new', function () {
                 it('最新のポスト10件が取得される。', function (done) {
-                    option.path = '/articles?originId=aa&originOrder=new';
+                    option.path = '/articles?originId=aa&timeseries=new';
                     option.method = 'GET';
                     const req = http.request(option, function (res) {
                         let body = '';
