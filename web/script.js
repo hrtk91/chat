@@ -22,6 +22,26 @@ $('<div/>').appendTo('body').load('login.html', function () {
 fetchArticles().catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
 // ここまで
 
+setInterval(function () {
+    fetch('/latestArticle')
+    .then(res => {
+        return res.json();
+    })
+    .then(article => {
+        const ids = $('#articles .post_id').get().map(x => parseInt(x.innerHTML));
+        const currentId = Math.max(...ids);
+        if (!(currentId < article.id)) {
+            return;
+        }
+        const newPostButton = $('<button id="new_post">新しい投稿</button>');
+        $('#articles').prepend(newPostButton);
+        newPostButton.one('click', function (evt) {
+            newPostButton.remove();
+            alert('ToDo:新しい投稿取得処理');
+        });
+    });
+}, 5000);
+
 textarea.on('keyup', function (evt) {
     const key = evt.keyCode;
     if (evt.ctrlKey && key === 0x0D) {

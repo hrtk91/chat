@@ -106,6 +106,20 @@ ChatDB.prototype.getArticles = function (option) {
         });
     });
 }
+ChatDB.prototype.getlatestArticle = function () {
+    const query = 'select id from chat.post order by post.id desc';
+    return new Promise((resolve, reject) => {
+        this.db.query(query, (err, results, fields) => {
+            try {
+                if (err) throw err;
+                const article = results[0];
+                resolve(article);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
+}
 ChatDB.prototype.isExists = function (username) {
     return new Promise((resolve, reject) => {
         const query = 'select * from chat.users where username = ?';

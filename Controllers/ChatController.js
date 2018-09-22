@@ -93,7 +93,7 @@ ChatController.on('/user/create', function (option) {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
-        res.writeHead(400, {'Content-Type': 'text/plain'});
+        res.writeHead(400, {'Content-Type': 'text/html'});
         res.end('400 Bad Request. Please use POST method.');
         return false;
     }
@@ -116,7 +116,7 @@ ChatController.on('/user/create', function (option) {
             res.end();
         })
         .catch(err => {
-            res.writeHead(500, {'Content-Type': 'text/plain'});
+            res.writeHead(500, {'Content-Type': 'text/html'});
             res.end('500 Server Internal Error.');
             console.error(err);
         });
@@ -150,7 +150,7 @@ ChatController.on('/user/login', function (option) {
             res.end();
         })
         .catch(err => {
-            res.writeHead(500, {'Content-Type': 'text/plain'});
+            res.writeHead(500, {'Content-Type': 'text/html'});
             res.end('500 Server Internal Error.');
             console.error(err);
         });
@@ -161,7 +161,7 @@ ChatController.on('/article', function (option) {
     const req = option.request;
     const res = option.response;    
     if (req.method !== 'POST' && req.method !== 'PUT') {
-        res.writeHead(400, {'Content-Type': 'text/plain'});
+        res.writeHead(400, {'Content-Type': 'text/html'});
         res.end('400 Bad Request. Please use POST or PUT method.');
         return false;
     }
@@ -177,7 +177,7 @@ ChatController.on('/article', function (option) {
         if (body >= 1e6) req.connection.destroy();
     })
     .on('error', err => {
-        res.writeHead(500, {'Content-Type': 'text/plain'});
+        res.writeHead(500, {'Content-Type': 'text/html'});
         res.end('500 Server Internal Error.');
         console.error(err.message);
     })
@@ -198,10 +198,32 @@ ChatController.on('/article', function (option) {
             res.end();
         })
         .catch(err => {
-            res.writeHead(500, {'Content-Type': 'text/plain'});
+            res.writeHead(500, {'Content-Type': 'text/html'});
             res.end('500 Server Internal Error.');
             console.error(err);
         });
+    });
+});
+ChatController.on('/latestArticle', function (option) {
+    const req = option.request;
+    const res = option.response;
+    if (req.method !== 'GET') {
+        res.writeHead(400, {'Content-Type': 'text/html'});
+        res.end('400 Bad Request. Please use GET method.');
+        return false;
+    }
+    return true;
+}, option => {
+    const res = option.response;
+    db.getlatestArticle()
+    .then(article => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(article));
+    })
+    .catch(err => {
+        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.end('500 Internal Server Error.');
+        console.error(err);
     });
 });
 
@@ -209,7 +231,7 @@ ChatController.on('/articles', function (option) {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET') {
-        res.writeHead(400, {'Content-Type': 'text/plain'});
+        res.writeHead(400, {'Content-Type': 'text/html'});
         res.end('400 Bad Request. Please use GET method.');
         return false;
     }
@@ -225,7 +247,7 @@ ChatController.on('/articles', function (option) {
         res.end(JSON.stringify(results));
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/plain'});
+        res.writeHead(500, {'Content-Type': 'text/html'});
         res.end('500 Server Internal Error.');
         console.error(err);
     });
