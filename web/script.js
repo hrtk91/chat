@@ -19,10 +19,14 @@ $('<div/>').appendTo('body').load('login.html', function () {
         dialog.showModal();
     }
 });
-fetchArticles().catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
+fetchArticles()
+.then(articles => {
+    restructArticles(articles);
+    checkPreviousPost();
+})
+.catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
 // ここまで
-
-setInterval(function () {
+let timer = setInterval(function checkLatestPost() {
     fetch('/latestArticle')
     .then(res => {
         return res.json();
@@ -33,11 +37,20 @@ setInterval(function () {
         if (!(currentId < article.id)) {
             return;
         }
-        const newPostButton = $('<button id="new_post">新しい投稿</button>');
+        clearInterval(timer);
+        const newPostButton = $('<button id="new_post">新しい投稿の取得</button>').css('width', '100%');
         $('#articles').prepend(newPostButton);
         newPostButton.one('click', function (evt) {
             newPostButton.remove();
-            alert('ToDo:新しい投稿取得処理');
+            fetchArticles(`/articles?originId=${article.id}&timeseries=new`)
+            .then(articles => {
+                restructArticles(articles, true);
+                timer = setInterval(checkLatestPost, 5000);
+            })
+            .catch(err => {
+                alert('最新の投稿の取得に失敗しました。');
+                console.error(err);
+            });
         });
     });
 }, 5000);
@@ -64,7 +77,11 @@ sendButton.on('click', (e) => {
             if (!res.ok) throw new Error('メッセージの送信に失敗しました。');
             textarea.val('');
             clearArticles();
-            fetchArticles();
+            return fetchArticles();
+        })
+        .then(articles => {
+            restructArticles(articles);
+            checkPreviousPost();
         })
         .catch(err => {
             alert(err.message);
@@ -89,7 +106,11 @@ sendButton.on('click', (e) => {
             img.remove();
             textarea.val('');
             clearArticles();
-            fetchArticles();
+            return fetchArticles();
+        })
+        .then(articles => {
+            restructArticles(articles);
+            checkPreviousPost();
         });
     }
 });
@@ -197,8 +218,7 @@ function fetchArticles(url) {
         }).sort((a,b) => b.updated - a.updated);
 
         return articles;
-    })
-    .then(restructArticles);
+    });
 }
 
 function Article(article) {
@@ -223,6 +243,7 @@ function Article(article) {
     image.crossOrigin ='anonymous';
     if (article.image) { 
         image.src = 'data:image/jpg;base64,' + article.image;
+        $(image).css('max-width', '100%');
     }
 
     const header =
@@ -250,16 +271,26 @@ function clearArticles() {
     $('#articles').empty();
 }
 
-function restructArticles(articles) {
-    articles.forEach(article => Article(article).appendTo('#articles'));
-    const ids = articles.map(x => x.id);
+function restructArticles(articles, prepend) {
+    if (prepend) {
+        articles.forEach(article => Article(article).prependTo('#articles'));
+    } else {
+        articles.forEach(article => Article(article).appendTo('#articles'));
+    }
+}
+function checkPreviousPost() {
+    const ids = $('#articles .article .post_id').get().map(x => parseInt(x.innerHTML));
     const min = Math.min(...ids);
     if (min > 1) {
-        const nextButton = $('<button id="next_post">次の投稿</button>');
-        nextButton.appendTo('#articles');
-        nextButton.one('click', function (evt) {
-            nextButton.remove();
-            fetchArticles(`./articles?originId=${min-1}&timeseries=old`)
+        const previousButton = $('<button id="previous_post">次の投稿</button>').css('width', '100%');
+        previousButton.appendTo('#articles');
+        previousButton.one('click', function (evt) {
+            previousButton.remove();
+            fetchArticles(`/articles?originId=${min-1}&timeseries=old`)
+            .then(articles => {
+                restructArticles(articles);
+                checkPreviousPost();
+            })
             .catch(err => alert(err));
         });
     }
