@@ -1,11 +1,11 @@
-/*
-body {
-    max-width: 540px;
+
+input,textarea {
+    font-size: 1rem;
 }
-*/
 
 #contents {
     max-width: 540px;
+    margin: 0 auto;
 }
 
 label[for="upload_button"] {
