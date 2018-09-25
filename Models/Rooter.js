@@ -1,11 +1,11 @@
 'use strict';
 
 function Rooter() {
-    this.listener = [];
-    this.validations = [];
+    this.listener = {};
+    this.validations = {};
 }
 
-Rooter.prototype.on = function (type) {
+Rooter.prototype.on = function on(type) {
     var validator;
     var callback;
     if (typeof(arguments[1]) === 'function' && typeof(arguments[2]) === 'function') {
@@ -29,7 +29,7 @@ Rooter.prototype.on = function (type) {
 
     return this;
 }
-Rooter.prototype.off = function (type) {
+Rooter.prototype.off = function off(type) {
     const validations = this.validations;
     const listener = this.listener;
 
@@ -40,7 +40,7 @@ Rooter.prototype.off = function (type) {
 
     return this;
 }
-Rooter.prototype.fire = function (type, option) {
+Rooter.prototype.fire = function fire(type, option) {
     const validator = this.validations[type];
     const listener = this.listener[type];
     option = option || {};
@@ -63,11 +63,24 @@ Rooter.prototype.fire = function (type, option) {
     return this;
 }
 
-Rooter.prototype.defaultRooting = function (defaultfunc) {
+Rooter.prototype.defaultRooting = function defaultRooting(defaultfunc) {
     if (typeof(defaultfunc) === 'function')
         this.defaultfunc = defaultfunc;
     
     return this;
+}
+
+Rooter.prototype.respond = function respond(option, response) {
+    option = option || {};
+    const headers = {
+        'html' : { 'Content-Type' : 'text/html'},
+        'json': {'Content-Type': 'application/json' }
+    };
+    const header = headers[option.contentType] || {'Content-Type': 'text/html'};
+    const statusCode = option.statusCode || 200;
+    const body = option.body || '';
+    response.writeHead(statusCode, header);
+    response.end(body);
 }
 
 module.exports = Rooter;

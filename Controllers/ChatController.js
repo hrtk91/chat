@@ -59,7 +59,7 @@ ChatController.defaultRooting(function (option) {
 
     if (query.pathname.indexOf('../') !== -1 || query.pathname.indexOf('..\\') !== -1) {
         res.writeHead(403, {'Content-Type' : 'text/html'});
-        res.end('403 Forbidden.')
+        res.end('403 Forbidden.');
         return;
     }
 
@@ -93,8 +93,15 @@ ChatController.on('/user/create', function (option) {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
+        this.respond({
+            statusCode: 400,
+            contentType: 'html',
+            body: '400 Bad Request. Please use POST method.'
+        }, res);
+        /*
         res.writeHead(400, {'Content-Type': 'text/html'});
         res.end('400 Bad Request. Please use POST method.');
+        */
         return false;
     }
     return true;
