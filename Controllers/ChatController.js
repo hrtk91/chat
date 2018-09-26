@@ -50,7 +50,7 @@ function setHeaderFromExtension(ext, res) {
     }
 }
 
-ChatController.defaultRooting(function (option) {
+ChatController.defaultRooting(option => {
     const req = option.request;
     const res = option.response;
     const query = url.parse(req.url, true);
@@ -89,7 +89,7 @@ ChatController.on('/', option => {
     });
 });
 
-ChatController.on('/user/create', function (option) {
+ChatController.on('/user/create', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
@@ -109,28 +109,43 @@ ChatController.on('/user/create', function (option) {
     const req = option.request;
     const res = option.response;
 
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', function () {
+    new Promise(resolve => {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk;
+            if (body >= 1e6) {
+                req.connection.destroy();
+                this.respond({
+                    statusCode: 403,
+                    contentType: 'html',
+                    body: 'POST size is too many.'
+                }, res);
+            }
+        })
+        .on('end', () => {
+            resolve(body);
+        });
+    })
+    .then(body => {
         const post = JSON.parse(body || '{}');
         const session = cookie.parse(req.headers.cookie || '');
         const username = post.username || session.username;
         const password = post.password || session.password;
     
-        db.createUser(username, password)
-        .then(() => {
-            res.writeHead(201, {'Content-Type': 'application/json'});
-            res.end();
-        })
-        .catch(err => {
-            res.writeHead(500, {'Content-Type': 'text/html'});
-            res.end('500 Server Internal Error.');
-            console.error(err);
-        });
+        return db.createUser(username, password);
+    })
+    .then(() => {
+        res.writeHead(201, {'Content-Type': 'application/json'});
+        res.end();
+    })
+    .catch(err => {
+        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.end('500 Server Internal Error.');
+        console.error(err);
     });
 });
 
-ChatController.on('/user/login', function (option) {
+ChatController.on('/user/login', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET' && req.method !== 'POST') {
@@ -143,28 +158,44 @@ ChatController.on('/user/login', function (option) {
     const req = option.request;
     const res = option.response;
 
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', function () {
+    new Promise(resolve => {
+        let body = '';
+        req.on('data', chunk => {
+            // 1e6 = 10^6 = 1MB
+            body += chunk;
+            if (body >= 1e6) {
+                req.connection.destroy();
+                this.respond({
+                    statusCode: 403,
+                    contentType: 'html',
+                    body: 'POST size is too many.'
+                }, res);
+            }
+        })
+        .on('end', () => {
+            resolve(body);
+        })
+    })
+    .then(body => {
         const post = JSON.parse(body || '{}');
         const session = cookie.parse(req.headers.cookie || '');
         const username = post.sender || session.username;
         const password = post.password || session.password;
     
-        db.login(username, password)
-        .then(() => {
-            res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end();
-        })
-        .catch(err => {
-            res.writeHead(500, {'Content-Type': 'text/html'});
-            res.end('500 Server Internal Error.');
-            console.error(err);
-        });
+        return db.login(username, password);
+    })
+    .then(() => {
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end();
+    })
+    .catch(err => {
+        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.end('500 Server Internal Error.');
+        console.error(err);
     });
 });
 
-ChatController.on('/article', function (option) {
+ChatController.on('/article', option => {
     const req = option.request;
     const res = option.response;    
     if (req.method !== 'POST' && req.method !== 'PUT') {
@@ -177,41 +208,53 @@ ChatController.on('/article', function (option) {
     const req = option.request;
     const res = option.response;
 
-    let body = '';
-    req.on('data', (chunk) => {
-        body += chunk;
-        // 1e6 = 10^6 = 1MB
-        if (body >= 1e6) req.connection.destroy();
+    new Promise((resolve, reject) => {
+        let body = '';
+        req.on('data', (chunk) => {
+            body += chunk;
+            // 1e6 = 10^6 = 1MB
+            if (body >= 1e6) {
+                req.connection.destroy();
+                this.respond({
+                    statusCode: 403,
+                    contentType: 'html',
+                    body: 'POST size is too many.'
+                }, res);
+            }
+        })
+        .on('error', err => {
+            res.writeHead(500, {'Content-Type': 'text/html'});
+            res.end('500 Server Internal Error.');
+            console.error(err.message);
+        })
+        .on('end', () => {
+            resolve(body);
+        });
     })
-    .on('error', err => {
-        res.writeHead(500, {'Content-Type': 'text/html'});
-        res.end('500 Server Internal Error.');
-        console.error(err.message);
-    })
-    .on('end', () => {
+    .then(body => {
         const post = JSON.parse(body);
 
         const session = cookie.parse(req.headers.cookie || '');
         const username = post.sender || session.username;
         const password = post.password || session.password;
 
-        db.post({
+        return db.post({
                 sender: username,
                 password: password,
                 message: post.message,
         })
-        .then(id => {
-            res.writeHead(201, {'Content-Type': 'application/json'});
-            res.end();
-        })
-        .catch(err => {
-            res.writeHead(500, {'Content-Type': 'text/html'});
-            res.end('500 Server Internal Error.');
-            console.error(err);
-        });
+    })
+    .then(id => {
+        res.writeHead(201, {'Content-Type': 'application/json'});
+        res.end();
+    })
+    .catch(err => {
+        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.end('500 Server Internal Error.');
+        console.error(err);
     });
 });
-ChatController.on('/latestArticle', function (option) {
+ChatController.on('/latestArticle', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET') {
@@ -234,7 +277,7 @@ ChatController.on('/latestArticle', function (option) {
     });
 });
 
-ChatController.on('/articles', function (option) {
+ChatController.on('/articles', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET') {
@@ -260,7 +303,7 @@ ChatController.on('/articles', function (option) {
     });
 });
 
-ChatController.on('/image', function (option) {
+ChatController.on('/image', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
@@ -273,17 +316,36 @@ ChatController.on('/image', function (option) {
     const req = option.request;
     const res = option.response;
 
-    let body = '';
-    req.on('data', (chunk) => {
-        body += chunk;
-        if (body.length >= 10e6) req.connection.destroy();
-    });
-    req.on('error', (err) => {
-        res.writeHead(500, {'Content-Type': 'text/plain'});
-        res.end('500 Server Internal Error.');
-        console.error(err);
-    });
-    req.on('end', () => {
+    new Promise(resolve => {
+        let body = '';
+        req.on('data', (chunk) => {
+            body += chunk;
+            if (body.length >= 10e6) {
+                req.connection.destroy();
+                this.respond({
+                    statusCode: 403,
+                    contentType: 'html',
+                    body: 'POST size is too many.'
+                }, res);
+            }
+        });
+        req.on('error', (err) => {
+            this.respond({
+                statusCode: 500,
+                contentTpe: 'html',
+                body: '500 Server Internal Error.'
+            }, res);
+            /*
+            res.writeHead(500, {'Content-Type': 'text/plain'});
+            res.end('500 Server Internal Error.');
+            */
+            console.error(err);
+        });
+        req.on('end', () => {
+            resolve(body);
+        });
+    })
+    .then(body => {
         const post = JSON.parse(body);
         const session = cookie.parse(req.headers.cookie || '');
         const username = post.sender || session.username;
@@ -291,21 +353,21 @@ ChatController.on('/image', function (option) {
         const message = post.message;
         const imageData = post.imageData;
 
-        db.postImage({
+        return db.postImage({
             sender: username,
             password: password,
             message: message,
             data: imageData
-        })
-        .then(id=> {
-            res.writeHead(201, {'Content-Type': 'application/json'});
-            res.end();
-        })
-        .catch(err => {
-            res.writeHead(500, {'Content-Type': 'text/plain'});
-            res.end('500 Server Internal Error.');
-            console.error(err);
         });
+    })
+    .then(id => {
+        res.writeHead(201, {'Content-Type': 'application/json'});
+        res.end();
+    })
+    .catch(err => {
+        res.writeHead(500, {'Content-Type': 'text/plain'});
+        res.end('500 Server Internal Error.');
+        console.error(err);
     });
 });
 
