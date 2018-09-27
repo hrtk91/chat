@@ -23,6 +23,16 @@ db.connect()
     console.error(err);
 });
 
+const contentTypes = {
+    'html': {'Content-Type': 'text/html'},
+    'css': {'Content-Type': 'text/css'},
+    'text': {'Content-Type': 'text/plain'},
+    'js': {'Content-Type': 'application/javascript'},
+    'json': {'Content-Type': 'application/json'},
+    'plain': {'Content-Type': 'text/plain'}
+};
+
+
 function readFile(filepath) {
     return new Promise((resolve, reject) => {
         fs.readFile(filepath, (err, data) => {
@@ -36,16 +46,16 @@ function readFile(filepath) {
 function setHeaderFromExtension(ext, res) {
     switch (ext) {
         case '.html':
-            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.writeHead(200, contentTypes['html']);
             break;
         case '.js':
-            res.writeHead(200, {'Content-Type': 'application/json'});
+            res.writeHead(200, contentTypes['js']);
             break;
         case '.css':
-            res.writeHead(200, {'Content-Type': 'text/css'});
+            res.writeHead(200, contentTypes['css']);
             break;
         default:
-            res.writeHead(404, {'Content-Type': 'text/plain'});
+            res.writeHead(404, contentTypes['text']);
             break;
     }
 }
@@ -58,7 +68,7 @@ ChatController.defaultRooting(option => {
     const ext = path.extname(filepath);
 
     if (query.pathname.indexOf('../') !== -1 || query.pathname.indexOf('..\\') !== -1) {
-        res.writeHead(403, {'Content-Type' : 'text/html'});
+        res.writeHead(403, contentTypes['html']);
         res.end('403 Forbidden.');
         return;
     }
@@ -69,7 +79,7 @@ ChatController.defaultRooting(option => {
         console.info((new Date()) + ' responsed To "' + req.socket.address().address + '" : ' + filepath);
         return;
     } else {
-        res.writeHead(404, {'Content-Type' : 'text/html'});
+        res.writeHead(404, contentTypes['html']);
         res.end('404 not found.');
         return;
     }
@@ -78,12 +88,12 @@ ChatController.defaultRooting(option => {
 ChatController.on('/', option => {
     const res = option.response;
     const filepath = path.join(process.cwd(), 'web', 'index.html');
-    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.writeHead(200, contentTypes['html']);
     readFile(filepath).then(data => {
         res.end(data);
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.writeHead(500, contentTypes['html']);
         res.end('500 Internal Server Error.');
         console.error(err);
     });
@@ -93,15 +103,8 @@ ChatController.on('/user/create', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
-        this.respond({
-            statusCode: 400,
-            contentType: 'html',
-            body: '400 Bad Request. Please use POST method.'
-        }, res);
-        /*
-        res.writeHead(400, {'Content-Type': 'text/html'});
+        res.writeHead(400, contentTypes['html']);
         res.end('400 Bad Request. Please use POST method.');
-        */
         return false;
     }
     return true;
@@ -115,11 +118,8 @@ ChatController.on('/user/create', option => {
             body += chunk;
             if (body >= 1e6) {
                 req.connection.destroy();
-                this.respond({
-                    statusCode: 403,
-                    contentType: 'html',
-                    body: 'POST size is too many.'
-                }, res);
+                res.writeHead(413, contentTypes['html']);
+                res.end('413 Payload Too Large.');
             }
         })
         .on('end', () => {
@@ -135,11 +135,11 @@ ChatController.on('/user/create', option => {
         return db.createUser(username, password);
     })
     .then(() => {
-        res.writeHead(201, {'Content-Type': 'application/json'});
+        res.writeHead(201, contentTypes['json']);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.writeHead(500, contentTypes['html']);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -149,7 +149,7 @@ ChatController.on('/user/login', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET' && req.method !== 'POST') {
-        res.writeHead(400, {'Content-Type': 'text/plain'});
+        res.writeHead(400, contentTypes['html']);
         res.end('400 Bad Request. Please use GET method.');
         return false;
     }
@@ -165,11 +165,8 @@ ChatController.on('/user/login', option => {
             body += chunk;
             if (body >= 1e6) {
                 req.connection.destroy();
-                this.respond({
-                    statusCode: 403,
-                    contentType: 'html',
-                    body: 'POST size is too many.'
-                }, res);
+                res.writeHead(413, contentTypes['html']);
+                res.end('413 Payload Too Large.');
             }
         })
         .on('end', () => {
@@ -185,11 +182,11 @@ ChatController.on('/user/login', option => {
         return db.login(username, password);
     })
     .then(() => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.writeHead(200, contentTypes['json']);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.writeHead(500, contentTypes['html']);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -199,7 +196,7 @@ ChatController.on('/article', option => {
     const req = option.request;
     const res = option.response;    
     if (req.method !== 'POST' && req.method !== 'PUT') {
-        res.writeHead(400, {'Content-Type': 'text/html'});
+        res.writeHead(400, contentTypes['html']);
         res.end('400 Bad Request. Please use POST or PUT method.');
         return false;
     }
@@ -215,15 +212,12 @@ ChatController.on('/article', option => {
             // 1e6 = 10^6 = 1MB
             if (body >= 1e6) {
                 req.connection.destroy();
-                this.respond({
-                    statusCode: 403,
-                    contentType: 'html',
-                    body: 'POST size is too many.'
-                }, res);
+                res.writeHead(413, contentTypes['html']);
+                res.end('413 Payload Too Large.');
             }
         })
         .on('error', err => {
-            res.writeHead(500, {'Content-Type': 'text/html'});
+            res.writeHead(500, contentTypes['html']);
             res.end('500 Server Internal Error.');
             console.error(err.message);
         })
@@ -245,11 +239,11 @@ ChatController.on('/article', option => {
         })
     })
     .then(id => {
-        res.writeHead(201, {'Content-Type': 'application/json'});
+        res.writeHead(201, contentTypes['json']);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.writeHead(500, contentTypes['html']);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -258,7 +252,7 @@ ChatController.on('/latestArticle', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET') {
-        res.writeHead(400, {'Content-Type': 'text/html'});
+        res.writeHead(400, contentTypes['html']);
         res.end('400 Bad Request. Please use GET method.');
         return false;
     }
@@ -267,11 +261,11 @@ ChatController.on('/latestArticle', option => {
     const res = option.response;
     db.getlatestArticle()
     .then(article => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.writeHead(200, contentTypes['json']);
         res.end(JSON.stringify(article));
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.writeHead(500, contentTypes['html']);
         res.end('500 Internal Server Error.');
         console.error(err);
     });
@@ -281,7 +275,7 @@ ChatController.on('/articles', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET') {
-        res.writeHead(400, {'Content-Type': 'text/html'});
+        res.writeHead(400, contentTypes['html']);
         res.end('400 Bad Request. Please use GET method.');
         return false;
     }
@@ -293,11 +287,11 @@ ChatController.on('/articles', option => {
     db.getArticles(parsedurl.query)
     .then(results => {
         const res = option.response;
-        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.writeHead(200, contentTypes['json']);
         res.end(JSON.stringify(results));
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/html'});
+        res.writeHead(500, contentTypes['html']);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -307,7 +301,7 @@ ChatController.on('/image', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
-        res.writeHead(400, { 'Content-Type:': 'text/plain' });
+        res.writeHead(400, contentTypes['html']);
         res.end('400 Bad Request. Please use POST method.');
         return false;
     }
@@ -322,26 +316,14 @@ ChatController.on('/image', option => {
             body += chunk;
             if (body.length >= 10e6) {
                 req.connection.destroy();
-                this.respond({
-                    statusCode: 403,
-                    contentType: 'html',
-                    body: 'POST size is too many.'
-                }, res);
+                res.writeHead(413, contentTypes['html']);
+                res.end('413 Payload Too Large.');
             }
-        });
-        req.on('error', (err) => {
-            this.respond({
-                statusCode: 500,
-                contentTpe: 'html',
-                body: '500 Server Internal Error.'
-            }, res);
-            /*
-            res.writeHead(500, {'Content-Type': 'text/plain'});
+        }).on('error', (err) => {
+            res.writeHead(500, contentTypes['html']);
             res.end('500 Server Internal Error.');
-            */
             console.error(err);
-        });
-        req.on('end', () => {
+        }).on('end', () => {
             resolve(body);
         });
     })
@@ -361,11 +343,11 @@ ChatController.on('/image', option => {
         });
     })
     .then(id => {
-        res.writeHead(201, {'Content-Type': 'application/json'});
+        res.writeHead(201, contentTypes['json']);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, {'Content-Type': 'text/plain'});
+        res.writeHead(500, contentTypes['html']);
         res.end('500 Server Internal Error.');
         console.error(err);
     });

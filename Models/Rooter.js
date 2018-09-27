@@ -70,17 +70,4 @@ Rooter.prototype.defaultRooting = function defaultRooting(defaultfunc) {
     return this;
 }
 
-Rooter.prototype.respond = function respond(option, response) {
-    option = option || {};
-    const headers = {
-        'html' : { 'Content-Type' : 'text/html'},
-        'json': {'Content-Type': 'application/json' }
-    };
-    const header = headers[option.contentType] || {'Content-Type': 'text/html'};
-    const statusCode = option.statusCode || 200;
-    const body = option.body || '';
-    response.writeHead(statusCode, header);
-    response.end(body);
-}
-
 module.exports = Rooter;
