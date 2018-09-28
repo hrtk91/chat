@@ -46,16 +46,16 @@ function readFile(filepath) {
 function setHeaderFromExtension(ext, res) {
     switch (ext) {
         case '.html':
-            res.writeHead(200, contentTypes['html']);
+            res.writeHead(200, contentTypes.html);
             break;
         case '.js':
-            res.writeHead(200, contentTypes['js']);
+            res.writeHead(200, contentTypes.js);
             break;
         case '.css':
-            res.writeHead(200, contentTypes['css']);
+            res.writeHead(200, contentTypes.css);
             break;
         default:
-            res.writeHead(404, contentTypes['text']);
+            res.writeHead(404, contentTypes.text);
             break;
     }
 }
@@ -68,7 +68,7 @@ ChatController.defaultRooting(option => {
     const ext = path.extname(filepath);
 
     if (query.pathname.indexOf('../') !== -1 || query.pathname.indexOf('..\\') !== -1) {
-        res.writeHead(403, contentTypes['html']);
+        res.writeHead(403, contentTypes.html);
         res.end('403 Forbidden.');
         return;
     }
@@ -79,7 +79,7 @@ ChatController.defaultRooting(option => {
         console.info((new Date()) + ' responsed To "' + req.socket.address().address + '" : ' + filepath);
         return;
     } else {
-        res.writeHead(404, contentTypes['html']);
+        res.writeHead(404, contentTypes.html);
         res.end('404 not found.');
         return;
     }
@@ -88,12 +88,12 @@ ChatController.defaultRooting(option => {
 ChatController.on('/', option => {
     const res = option.response;
     const filepath = path.join(process.cwd(), 'web', 'index.html');
-    res.writeHead(200, contentTypes['html']);
+    res.writeHead(200, contentTypes.html);
     readFile(filepath).then(data => {
         res.end(data);
     })
     .catch(err => {
-        res.writeHead(500, contentTypes['html']);
+        res.writeHead(500, contentTypes.html);
         res.end('500 Internal Server Error.');
         console.error(err);
     });
@@ -103,7 +103,7 @@ ChatController.on('/user/create', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
-        res.writeHead(400, contentTypes['html']);
+        res.writeHead(400, contentTypes.html);
         res.end('400 Bad Request. Please use POST method.');
         return false;
     }
@@ -118,7 +118,7 @@ ChatController.on('/user/create', option => {
             body += chunk;
             if (body >= 1e6) {
                 req.connection.destroy();
-                res.writeHead(413, contentTypes['html']);
+                res.writeHead(413, contentTypes.html);
                 res.end('413 Payload Too Large.');
             }
         })
@@ -135,11 +135,11 @@ ChatController.on('/user/create', option => {
         return db.createUser(username, password);
     })
     .then(() => {
-        res.writeHead(201, contentTypes['json']);
+        res.writeHead(201, contentTypes.json);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, contentTypes['html']);
+        res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -149,7 +149,7 @@ ChatController.on('/user/login', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET' && req.method !== 'POST') {
-        res.writeHead(400, contentTypes['html']);
+        res.writeHead(400, contentTypes.html);
         res.end('400 Bad Request. Please use GET method.');
         return false;
     }
@@ -165,7 +165,7 @@ ChatController.on('/user/login', option => {
             body += chunk;
             if (body >= 1e6) {
                 req.connection.destroy();
-                res.writeHead(413, contentTypes['html']);
+                res.writeHead(413, contentTypes.html);
                 res.end('413 Payload Too Large.');
             }
         })
@@ -182,11 +182,11 @@ ChatController.on('/user/login', option => {
         return db.login(username, password);
     })
     .then(() => {
-        res.writeHead(200, contentTypes['json']);
+        res.writeHead(200, contentTypes.json);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, contentTypes['html']);
+        res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -196,7 +196,7 @@ ChatController.on('/article', option => {
     const req = option.request;
     const res = option.response;    
     if (req.method !== 'POST' && req.method !== 'PUT') {
-        res.writeHead(400, contentTypes['html']);
+        res.writeHead(400, contentTypes.html);
         res.end('400 Bad Request. Please use POST or PUT method.');
         return false;
     }
@@ -212,12 +212,12 @@ ChatController.on('/article', option => {
             // 1e6 = 10^6 = 1MB
             if (body >= 1e6) {
                 req.connection.destroy();
-                res.writeHead(413, contentTypes['html']);
+                res.writeHead(413, contentTypes.html);
                 res.end('413 Payload Too Large.');
             }
         })
         .on('error', err => {
-            res.writeHead(500, contentTypes['html']);
+            res.writeHead(500, contentTypes.html);
             res.end('500 Server Internal Error.');
             console.error(err.message);
         })
@@ -239,11 +239,11 @@ ChatController.on('/article', option => {
         })
     })
     .then(id => {
-        res.writeHead(201, contentTypes['json']);
+        res.writeHead(201, contentTypes.json);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, contentTypes['html']);
+        res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -252,7 +252,7 @@ ChatController.on('/latestArticle', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET') {
-        res.writeHead(400, contentTypes['html']);
+        res.writeHead(400, contentTypes.html);
         res.end('400 Bad Request. Please use GET method.');
         return false;
     }
@@ -261,11 +261,11 @@ ChatController.on('/latestArticle', option => {
     const res = option.response;
     db.getlatestArticle()
     .then(article => {
-        res.writeHead(200, contentTypes['json']);
+        res.writeHead(200, contentTypes.json);
         res.end(JSON.stringify(article));
     })
     .catch(err => {
-        res.writeHead(500, contentTypes['html']);
+        res.writeHead(500, contentTypes.html);
         res.end('500 Internal Server Error.');
         console.error(err);
     });
@@ -275,7 +275,7 @@ ChatController.on('/articles', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'GET') {
-        res.writeHead(400, contentTypes['html']);
+        res.writeHead(400, contentTypes.html);
         res.end('400 Bad Request. Please use GET method.');
         return false;
     }
@@ -287,11 +287,11 @@ ChatController.on('/articles', option => {
     db.getArticles(parsedurl.query)
     .then(results => {
         const res = option.response;
-        res.writeHead(200, contentTypes['json']);
+        res.writeHead(200, contentTypes.json);
         res.end(JSON.stringify(results));
     })
     .catch(err => {
-        res.writeHead(500, contentTypes['html']);
+        res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
@@ -301,7 +301,7 @@ ChatController.on('/image', option => {
     const req = option.request;
     const res = option.response;
     if (req.method !== 'POST') {
-        res.writeHead(400, contentTypes['html']);
+        res.writeHead(400, contentTypes.html);
         res.end('400 Bad Request. Please use POST method.');
         return false;
     }
@@ -316,11 +316,11 @@ ChatController.on('/image', option => {
             body += chunk;
             if (body.length >= 10e6) {
                 req.connection.destroy();
-                res.writeHead(413, contentTypes['html']);
+                res.writeHead(413, contentTypes.html);
                 res.end('413 Payload Too Large.');
             }
         }).on('error', (err) => {
-            res.writeHead(500, contentTypes['html']);
+            res.writeHead(500, contentTypes.html);
             res.end('500 Server Internal Error.');
             console.error(err);
         }).on('end', () => {
@@ -343,11 +343,11 @@ ChatController.on('/image', option => {
         });
     })
     .then(id => {
-        res.writeHead(201, contentTypes['json']);
+        res.writeHead(201, contentTypes.json);
         res.end();
     })
     .catch(err => {
-        res.writeHead(500, contentTypes['html']);
+        res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
         console.error(err);
     });
