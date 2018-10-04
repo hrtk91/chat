@@ -29,11 +29,16 @@ fetchArticles()
 let timer = setInterval(function checkLatestPost() {
     fetch('/latestArticle')
     .then(res => {
+        if (res.status === 500) {
+            throw new Error(res.status.toString() + ':' + res.body);
+        } else if (res.status === 204) {
+            return {id: -1};
+        }
         return res.json();
     })
     .then(article => {
         const ids = $('#articles .post_id').get().map(x => parseInt(x.innerHTML));
-        const currentId = Math.max(...ids);
+        const currentId = ids.length ? Math.max(...ids) : Infinity;
         if (!(currentId < article.id)) {
             return;
         }
@@ -52,6 +57,11 @@ let timer = setInterval(function checkLatestPost() {
                 console.error(err);
             });
         });
+    })
+    .catch(err => {
+        alert('最新の投稿の取得に失敗しました。\r\nページを更新してください。');
+        console.error(err.message);
+        clearInterval(timer);
     });
 }, 5000);
 
@@ -280,7 +290,7 @@ function restructArticles(articles, prepend) {
 }
 function checkPreviousPost() {
     const ids = $('#articles .article .post_id').get().map(x => parseInt(x.innerHTML));
-    const min = Math.min(...ids);
+    const min = ids.length ? Math.min(...ids) : -Infinity;
     if (min > 1) {
         const previousButton = $('<button id="previous_post">次の投稿</button>').css('width', '100%');
         previousButton.appendTo('#articles');

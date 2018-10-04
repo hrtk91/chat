@@ -110,13 +110,12 @@ ChatDB.prototype.getlatestArticle = function () {
     const query = 'select id from chat.post order by post.id desc';
     return new Promise((resolve, reject) => {
         this.db.query(query, (err, results, fields) => {
-            try {
-                if (err) throw err;
-                const article = results[0];
-                resolve(article);
-            } catch (error) {
-                reject(error);
+            if (err) {
+                return reject(err);
             }
+
+            const article = results[0];
+            resolve(article);
         });
     });
 }

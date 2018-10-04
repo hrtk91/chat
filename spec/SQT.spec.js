@@ -475,25 +475,25 @@ describe('app.jsの検査', function () {
         });
     });
     describe('/latestArticleテスト', function () {
-        beforeAll(done => {
-            const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`, `updated`) value (?, ?, ?, ?);'
-            const tasks = [];
-            for (var i = 0; i < dbPostdataLength; i++) {
-                var p = new Promise((resolve, reject) => {
-                    const date = new Date(Date.now() + (1000 * i));
-                    db.query(insertQuery, ['testsender' + i.toString(), 'message' + i.toString(), 43, date], function (err, results) {
-                        if (err)
-                            reject(err);
-                        else
-                            resolve(results);
-                    });
-                });
-                tasks.push(p);
-            }
-            Promise.all(tasks).then(done);
-        });
-        afterAll(done => Promise.all(cleanupDB(db)).then(done));
         describe('/latestArticle通常ケース', function () {
+            beforeAll(done => {
+                const insertQuery = 'insert into chat.post (`sender`,`message`, `user_id`, `updated`) value (?, ?, ?, ?);'
+                const tasks = [];
+                for (var i = 0; i < dbPostdataLength; i++) {
+                    var p = new Promise((resolve, reject) => {
+                        const date = new Date(Date.now() + (1000 * i));
+                        db.query(insertQuery, ['testsender' + i.toString(), 'message' + i.toString(), 43, date], function (err, results) {
+                            if (err)
+                                reject(err);
+                            else
+                                resolve(results);
+                        });
+                    });
+                    tasks.push(p);
+                }
+                Promise.all(tasks).then(done);
+            });
+            afterAll(done => Promise.all(cleanupDB(db)).then(done));
             it('通常取得', function (done) {
                 option.path = '/latestArticle';
                 option.method = 'GET';
@@ -509,6 +509,26 @@ describe('app.jsの検査', function () {
                         const article = JSON.parse(body);
                         expect(200).toBe(res.statusCode);
                         expect(30).toBe(article.id);
+                        done();
+                    });
+                });
+            });
+        });
+        describe('異常系', function () {
+            beforeEach(done => Promise.all(cleanupDB(db)).then(done));
+            it('ポストデータ0', done => {
+                option.path = '/latestArticle';
+                option.method = 'GET';
+                new Promise((resolve, reject) => {
+                    const req = http.request(option, resolve);
+                    req.on('error', reject);
+                    req.end();
+                })
+                .then(res => {
+                    let body = '';
+                    res.on('data', chunk => body += chunk);
+                    res.on('end', () => {
+                        expect(204).toBe(res.statusCode);
                         done();
                     });
                 });

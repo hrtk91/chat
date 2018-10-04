@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const Rooter = require(path.join(process.cwd(), '/Models/Rooter.js'));
 const ChatDB = require(path.join(process.cwd(), '/Models/ChatDB.js'));
+const Logger = new require(path.join(process.cwd(), '/Models/Logger.js'))('ChatController.log');
 
 const ChatController = new Rooter();
 const db = new ChatDB({
@@ -261,8 +262,13 @@ ChatController.on('/latestArticle', option => {
     const res = option.response;
     db.getlatestArticle()
     .then(article => {
-        res.writeHead(200, contentTypes.json);
-        res.end(JSON.stringify(article));
+        if (!article) {
+            res.writeHead(204, contentTypes.html);
+            res.end('204 No Content.');
+        } else {
+            res.writeHead(200, contentTypes.json);
+            res.end(JSON.stringify(article));
+        }
     })
     .catch(err => {
         res.writeHead(500, contentTypes.html);
