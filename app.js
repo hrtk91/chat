@@ -10,7 +10,7 @@ const Rooter = require('./Models/Rooter.js');
 const ChatDB = require('./Models/ChatDB.js');
 const chatController = require('./Controllers/ChatController.js');
 
-http.createServer(main).listen(8080);
+http.createServer(main).listen(process.env.PORT || 8080);
 
 function main(req, res) {
     const query = url.parse(req.url, true);
