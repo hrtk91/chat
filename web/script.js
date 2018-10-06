@@ -22,7 +22,7 @@ $('<div/>').appendTo('body').load('login.html', function () {
 fetchArticles()
 .then(articles => {
     restructArticles(articles);
-    checkPreviousPost();
+    fetchPreviousPost();
 })
 .catch(err => alert('通信に失敗しました。\r\nページをリロードしてください。'));
 // ここまで
@@ -91,7 +91,7 @@ sendButton.on('click', (e) => {
         })
         .then(articles => {
             restructArticles(articles);
-            checkPreviousPost();
+            fetchPreviousPost();
         })
         .catch(err => {
             alert(err.message);
@@ -120,7 +120,7 @@ sendButton.on('click', (e) => {
         })
         .then(articles => {
             restructArticles(articles);
-            checkPreviousPost();
+            fetchPreviousPost();
         });
     }
 });
@@ -271,10 +271,15 @@ function Article(article) {
     const footer =
         $('<div class="article_footer"></div>');
 
-    return $('<div class="article"></div>')
+    const articleDom =
+        $('<div class="article"></div>')
         .append(header)
         .append(body)
         .append(footer);
+
+    articleDom.css('animation', 'fadeIn 1s ease 0s normal');
+
+    return articleDom;
 }
 
 function clearArticles() {
@@ -288,18 +293,22 @@ function restructArticles(articles, prepend) {
         articles.forEach(article => Article(article).appendTo('#articles'));
     }
 }
-function checkPreviousPost() {
+function fetchPreviousPost() {
     const ids = $('#articles .article .post_id').get().map(x => parseInt(x.innerHTML));
     const min = ids.length ? Math.min(...ids) : -Infinity;
     if (min > 1) {
-        const previousButton = $('<button id="previous_post">次の投稿</button>').css('width', '100%');
+        const previousButton = $('<button id="previous_post">次の投稿</button>')
         previousButton.appendTo('#articles');
+        previousButton.css('width', previousButton.parent().width());
         previousButton.one('click', function (evt) {
-            previousButton.remove();
+            previousButton.css('position', 'absolute');
+            previousButton.css('animation', 'fadeOut 0.5s ease 0s normal');
+            //previousButton.remove();
+            setTimeout(previousButton.remove.bind(previousButton), 500);
             fetchArticles(`/articles?originId=${min-1}&timeseries=old`)
             .then(articles => {
                 restructArticles(articles);
-                checkPreviousPost();
+                fetchPreviousPost();
             })
             .catch(err => alert(err));
         });

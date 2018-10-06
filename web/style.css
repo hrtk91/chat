@@ -5,7 +5,21 @@ input,textarea {
 
 #contents {
     max-width: 540px;
-    margin: 0 auto;
+    margin: 0px auto;
+    padding: 10px;
+    border: solid 2px #888;
+    border-radius: 10px;
+    background-color: #fff;
+    height: auto;
+}
+
+body {
+    background-color: #f1f1f1;
+}
+
+#articles {
+    margin: 10px 0px 0px 0px;
+    background-color: #fff;
 }
 
 label[for="upload_button"] {
@@ -49,9 +63,10 @@ button:active {
 }
 
 .article {
-    color: #444;
-    border: solid 1px #aaa;
-    margin: 2px;
+    color: #555;
+    border: solid 2px #aaa;
+    border-radius: 4px;
+    margin:  10px 0px;
     padding: 5px;
 }
 
@@ -73,4 +88,14 @@ button:active {
 
 .article .article_header .post_id {
     display: none;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; height: 0%; }
+    100% { opacity: 1.0; height: 100%; }
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1.0; height: 100%; }
+    100% { opacity: 0; height: 0%; }
 }
