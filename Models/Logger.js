@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const OS = require('os');
 
 function Logger(filename = '', interval = 200) {
     this.filepath = path.resolve(filename);
@@ -17,6 +18,10 @@ Logger.prototype.delayedWrite = function delayedWrite(timer, body, retry) {
     return this.delay(timer).then(_ => this.write(body, retry));
 }
 Logger.prototype.write = function write(body, retry = 5) {
+    if (!(/(\r\n|\r|\n)$/.test(body))) {
+        body += OS.EOL;
+    }
+
     return new Promise((resolve, reject) => {
         fs.appendFile(this.filepath, body, err => {
             if (err) {
@@ -34,10 +39,22 @@ Logger.prototype.write = function write(body, retry = 5) {
     });
 }
 
-Logger.prototype.close = function close() {
-    this.tasks.forEach(timerId => {
-        clearTimeout(timerId);
-    });
+Logger.prototype.info = function info(body = '') {
+    const log = '[info:' + (new Date()) + ']' + body;
+    console.info(log);
+    this.write(log).catch(err => console.error(err.message));
+}
+
+Logger.prototype.warn = function warn(body = '') {
+    const log = '[warn:' + (new Date()) + ']' + body;
+    console.warn(log);
+    this.write(log).catch(err => console.error(err.message));
+}
+
+Logger.prototype.error = function error(body = '') {
+    const log = '[error:' + (new Date()) + ']' + body;
+    console.error(log);
+    this.write(log).catch(err => console.error(err.message));
 }
 
 module.exports = Logger;

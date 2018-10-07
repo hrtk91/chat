@@ -6,7 +6,6 @@ const path = require('path');
 const fs = require('fs');
 const Rooter = require(path.join(process.cwd(), '/Models/Rooter.js'));
 const ChatDB = require(path.join(process.cwd(), '/Models/ChatDB.js'));
-const Logger = new require(path.join(process.cwd(), '/Models/Logger.js'))('ChatController.log');
 
 const ChatController = new Rooter();
 const db = new ChatDB({
@@ -18,10 +17,10 @@ const db = new ChatDB({
 });
 db.connect()
 .then(err => {
-    console.info('ChatDB connect success');
+    Logger.info('ChatDB connect successed.');
 })
 .catch(err => {
-    console.error(err);
+    Logger.error(err);
 });
 
 const contentTypes = {
@@ -77,7 +76,7 @@ ChatController.defaultRooting(option => {
     if (ext && fs.existsSync(filepath) === true) {
         setHeaderFromExtension(ext, res);
         readFile(filepath).then(data => res.end(data));
-        console.info((new Date()) + ' responsed To "' + req.socket.address().address + '" : ' + filepath);
+        Logger.info('responsed To "' + req.socket.address().address + '" : ' + filepath);
         return;
     } else {
         res.writeHead(404, contentTypes.html);
@@ -96,7 +95,7 @@ ChatController.on('/', option => {
     .catch(err => {
         res.writeHead(500, contentTypes.html);
         res.end('500 Internal Server Error.');
-        console.error(err);
+        Logger.error(err);
     });
 });
 
@@ -142,7 +141,7 @@ ChatController.on('/user/create', option => {
     .catch(err => {
         res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
-        console.error(err);
+        Logger.error(err);
     });
 });
 
@@ -189,7 +188,7 @@ ChatController.on('/user/login', option => {
     .catch(err => {
         res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
-        console.error(err);
+        Logger.error(err);
     });
 });
 
@@ -220,7 +219,7 @@ ChatController.on('/article', option => {
         .on('error', err => {
             res.writeHead(500, contentTypes.html);
             res.end('500 Server Internal Error.');
-            console.error(err.message);
+            Logger.error(err.message);
         })
         .on('end', () => {
             resolve(body);
@@ -246,7 +245,7 @@ ChatController.on('/article', option => {
     .catch(err => {
         res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
-        console.error(err);
+        Logger.error(err);
     });
 });
 ChatController.on('/latestArticle', option => {
@@ -273,7 +272,7 @@ ChatController.on('/latestArticle', option => {
     .catch(err => {
         res.writeHead(500, contentTypes.html);
         res.end('500 Internal Server Error.');
-        console.error(err);
+        Logger.error(err);
     });
 });
 
@@ -299,7 +298,7 @@ ChatController.on('/articles', option => {
     .catch(err => {
         res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
-        console.error(err);
+        Logger.error(err);
     });
 });
 
@@ -328,7 +327,7 @@ ChatController.on('/image', option => {
         }).on('error', (err) => {
             res.writeHead(500, contentTypes.html);
             res.end('500 Server Internal Error.');
-            console.error(err);
+            Logger.error(err);
         }).on('end', () => {
             resolve(body);
         });
@@ -355,7 +354,7 @@ ChatController.on('/image', option => {
     .catch(err => {
         res.writeHead(500, contentTypes.html);
         res.end('500 Server Internal Error.');
-        console.error(err);
+        Logger.error(err);
     });
 });
 
