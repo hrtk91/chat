@@ -86,9 +86,9 @@ ChatDB.prototype.getArticles = function (option) {
     ];
     
     if (timeseries === 'new') {
-        querys.push('where post.id >= ? ');
+        querys.push('where post.id > ? ');
     } else if (timeseries === 'old') {
-        querys.push('where post.id <= ? ');
+        querys.push('where post.id < ? ');
     }
 
     if (originId !== 0 && timeseries === 'new') {
