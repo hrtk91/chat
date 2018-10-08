@@ -47,7 +47,7 @@ let timer = setInterval(function checkLatestPost() {
         $('#articles').prepend(newPostButton);
         newPostButton.one('click', function (evt) {
             newPostButton.remove();
-            fetchArticles(`/articles?originId=${article.id}&timeseries=new`)
+            fetchArticles(`/articles?originId=${article.id}&timeseries=new&order=desc`)
             .then(articles => {
                 restructArticles(articles, true);
                 timer = setInterval(checkLatestPost, 5000);
