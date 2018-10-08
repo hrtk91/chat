@@ -121,16 +121,18 @@ if (username && password) {
         bottom: 0px;
         margin: auto;
         display: none;
-        min-width: 20%;
-        min-height: 20%;
-        max-height: 50%;
-        max-width: 50%;
+        max-height: 12em;
+        max-width: 12em;
         background-color: #ffffff;
         border: solid 3px #444;
         padding: 10px;
     }
-    input {
-        max-width: 80%;
+    p > input {
+        width: 90%;
+    }
+    #buttons {
+        display: flex;
+        justify-content: space-around;
     }
 </style>
 <div id="login_dialog">
@@ -140,6 +142,8 @@ if (username && password) {
         <br/>
         <input type="password" id="password_text" placeholder="パスワード"/>
     </p>
-    <button id="login_button">ログイン</button>
-    <button id="newcomer_button">アカウント作成</button>
+    <div id="buttons">
+        <button id="login_button">ログイン</button>
+        <button id="newcomer_button">アカウント作成</button>
+    </div>
 </div>
