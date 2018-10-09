@@ -52,6 +52,45 @@ describe('Logger.jsテスト', function () {
             });
         });
 
+        it('\\r\\n自動追記', function (done) {
+            const logger = new Logger(testFile);
+            logger.write('test word').then(() => {
+                fs.readFile(path.resolve(testFile), 'utf8', function (err, data) {
+                    if (err) {
+                        throw err;
+                    }
+                    expect('test word\r\n').toBe(data);
+                    done();
+                });
+            });
+        });
+
+        it('文末\\r\\rの\\r\\n置換', function (done) {
+            const logger = new Logger(testFile);
+            logger.write('test word\r\r').then(() => {
+                fs.readFile(path.resolve(testFile), 'utf8', function (err, data) {
+                    if (err) {
+                        throw err;
+                    }
+                    expect('test word\r\n').toBe(data);
+                    done();
+                });
+            });
+        });
+
+        it('文末\\n\\nの\\r\\n置換', function (done) {
+            const logger = new Logger(testFile);
+            logger.write('test word\n\n').then(() => {
+                fs.readFile(path.resolve(testFile), 'utf8', function (err, data) {
+                    if (err) {
+                        throw err;
+                    }
+                    expect('test word\r\n').toBe(data);
+                    done();
+                });
+            });
+        });
+
         it('書き込みタイムアウト確認', done => {
             createTestFile()
             .then(_ => chmod(testFile, 0o444))

@@ -20,6 +20,8 @@ Logger.prototype.delayedWrite = function delayedWrite(timer, body, retry) {
 Logger.prototype.write = function write(body, retry = 5) {
     if (!(/(\r\n|\r|\n)$/.test(body))) {
         body += OS.EOL;
+    } else if (/(\r+\n+|\r+|\n+)$/.test(body)) {
+        body = body.replace(/(\r+\n+|\r+|\n+)$/, '\r\n');
     }
 
     return new Promise((resolve, reject) => {
