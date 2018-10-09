@@ -179,9 +179,10 @@ describe('app.jsの検査', function () {
                         let body = '';
                         res.on('data', chunk => body += chunk);
                         res.on('end', () => {
-                            let data = JSON.parse(body);
-                            expect(10).toBe(data.length);
-                            for (let i = 0; i < 10; i++) {
+                            const data = JSON.parse(body);
+                            const length = data.length;
+                            expect(10).toBe(length);
+                            for (let i = 0; i < length; i++) {
                                 expect(20-i).toBe(data[i].id);
                             }
                             done();
@@ -198,10 +199,11 @@ describe('app.jsの検査', function () {
                         let body = '';
                         res.on('data', chunk => body += chunk);
                         res.on('end', () => {
-                            let data = JSON.parse(body);
-                            expect(10).toBe(data.length);
-                            for (let i = 0; i < 10; i++) {
-                                expect(10-i).toBe(data[i].id);
+                            const data = JSON.parse(body);
+                            const length = data.length;
+                            expect(9).toBe(length);
+                            for (let i = 0; i < length; i++) {
+                                expect(length-i).toBe(data[i].id);
                             }
                             done();
                         });

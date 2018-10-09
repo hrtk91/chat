@@ -4,7 +4,7 @@ const Logger = require(path.join(process.cwd(), '/Models/Logger.js'));
 
 describe('Logger.jsテスト', function () {
     describe('Logger.write', function () {
-        const str = 'test word';
+        const str = 'test word\r\n';
         const testFile = 'test.txt';
         
         beforeEach(done => {
